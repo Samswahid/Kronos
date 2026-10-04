@@ -59,7 +59,7 @@
       plateColor: '#f59f00',
       fontColor: '#121212',
       pluginBg: '#18181b',
-      accentColor: '#fa5252'
+      accentColor: '#f59f00'
     }
   };
 

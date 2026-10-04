@@ -78,7 +78,7 @@
       plateColor: '#f59f00',
       fontColor: '#121212',
       pluginBg: '#18181b',
-      accentColor: '#fa5252'
+      accentColor: '#f59f00'
     }
   };
 
@@ -172,6 +172,8 @@
       localStorage.setItem('kronos_config', JSON.stringify(config));
     } catch (e) {}
   }
+
+  window.applyTheme = applyTheme;
 
   // Initial Sample Sessions (Material Charcoal AE Motion Workflow)
   let sessions = [
@@ -341,9 +343,12 @@
   const btnSavePrefs = document.getElementById('btn-save-prefs');
   const saveStatus = document.getElementById('save-status-indicator');
 
-  // SVG Circumference for 22px radius circle = 2 * pi * 22 ~= 138.23
-  const RING_CIRCUMFERENCE = 138.23;
-  progressArc.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+  // SVG Circumference for 18px radius circle = 2 * pi * 18 ~= 113.1
+  const RING_CIRCUMFERENCE = 113.1;
+  if (progressArc) {
+    progressArc.style.strokeDasharray = `${RING_CIRCUMFERENCE}px`;
+    progressArc.setAttribute('stroke-dasharray', `${RING_CIRCUMFERENCE}`);
+  }
 
   // Track previous digits to trigger split-flap animations only on changed digits
   let prevDigits = { m1: '', m2: '', s1: '', s2: '' };
@@ -409,16 +414,19 @@
 
     // Update Circular Ring Gauge
     const fraction = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-    const offset = RING_CIRCUMFERENCE * (1 - fraction);
-    progressArc.style.strokeDashoffset = `${offset}`;
+    const offset = (RING_CIRCUMFERENCE * (1 - fraction)).toFixed(2);
+    if (progressArc) {
+      progressArc.style.setProperty('stroke-dashoffset', `${offset}px`, 'important');
+      progressArc.setAttribute('stroke-dashoffset', `${offset}`);
 
-    // Update Ring Color based on phase in Material Charcoal
-    if (currentPhase === 'focus') {
-      progressArc.style.stroke = 'var(--accent-amber)';
-    } else if (currentPhase === 'short_break') {
-      progressArc.style.stroke = 'var(--text-body)';
-    } else {
-      progressArc.style.stroke = 'var(--accent-teal)';
+      // Update Ring Color based on phase
+      if (currentPhase === 'focus') {
+        progressArc.style.setProperty('stroke', 'var(--theme-accent-color, #ea580c)', 'important');
+      } else if (currentPhase === 'short_break') {
+        progressArc.style.setProperty('stroke', 'var(--theme-font-color, #ffffff)', 'important');
+      } else {
+        progressArc.style.setProperty('stroke', 'var(--accent-teal, #14b8a6)', 'important');
+      }
     }
   }
 

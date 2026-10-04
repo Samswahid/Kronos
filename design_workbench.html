@@ -1,0 +1,3006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kronos — Neo-Brutalist Hardware & VST Knob Design Laboratory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       GLOBAL LABORATORY STYLES & RESET
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    :root {
+      --lab-bg: #101114;
+      --lab-surface: #18191e;
+      --lab-card: #1f2026;
+      --lab-border: rgba(255, 255, 255, 0.08);
+      --lab-text: #f0f2f5;
+      --lab-text-muted: #8a909d;
+      --lab-accent: #ea580c;
+      --lab-accent-glow: rgba(234, 88, 12, 0.35);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-grotesk: 'Space Grotesk', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background-color: var(--lab-bg);
+      color: var(--lab-text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 40px 24px 120px 24px;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Ambient Blueprint Dot Grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .lab-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1260px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .lab-header {
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--lab-border);
+      padding-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .lab-title-group h1 {
+      font-family: var(--font-grotesk);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-vst {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      background: var(--lab-accent);
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lab-title-group p {
+      font-size: 14px;
+      color: var(--lab-text-muted);
+      margin-top: 6px;
+      max-width: 760px;
+    }
+
+    .lab-stats-strip {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: var(--lab-surface);
+      border: 1px solid var(--lab-border);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .stat-pill strong {
+      color: var(--lab-accent);
+      margin-right: 4px;
+    }
+
+    /* Section Headings */
+    .section-title-bar {
+      margin: 56px 0 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .section-title-bar h2 {
+      font-family: var(--font-grotesk);
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .section-title-bar .line {
+      height: 1px;
+      background: var(--lab-border);
+      width: 100%;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: var(--lab-text-muted);
+      margin-bottom: 28px;
+      margin-top: -10px;
+    }
+
+    /* ==========================================================================
+       SECTION 1: THE 6 DOCKABLE PANEL VARIATIONS (NO PLAY BUTTONS / NO LOVE ICONS)
+       ========================================================================== */
+    .panel-showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 28px;
+    }
+
+    .panel-card {
+      background: var(--lab-surface);
+      border: 1px solid var(--lab-border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .panel-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .panel-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .panel-card-header h3 {
+      font-family: var(--font-grotesk);
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .variation-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--lab-text-muted);
+      border-radius: 4px;
+    }
+
+    .panel-card-header span.concept-desc {
+      font-size: 12px;
+      color: var(--lab-text-muted);
+    }
+
+    .dock-stage {
+      background: #090a0c;
+      border-radius: 8px;
+      padding: 24px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Common Dock Frame: Exact 74px profile */
+    .dock-bar-unit {
+      width: 276px;
+      height: 74px;
+      border-radius: 6px;
+      display: grid;
+      grid-template-columns: 50px 1fr 62px;
+      align-items: center;
+      padding: 5px 6px;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .zone-unit {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    .zone-unit.left {
+      gap: 4px;
+    }
+
+    .zone-unit.center {
+      padding: 0 3px;
+    }
+
+    .zone-unit.right {
+      gap: 3px;
+    }
+
+    /* Shared Split-Flap Clock Display Shell */
+    .common-split-flap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 5px;
+      border-radius: 4px;
+      gap: 1.5px;
+      height: 40px;
+      box-sizing: border-box;
+    }
+
+    .cf-group {
+      display: flex;
+      gap: 1.5px;
+    }
+
+    .cf-tile {
+      width: 18px;
+      height: 32px;
+      border-radius: 3px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-grotesk);
+      font-size: 21px;
+      font-weight: 700;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+    }
+
+    .cf-seam {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 5;
+    }
+
+    .cf-colon {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 0 1px;
+    }
+
+    .cf-colon span {
+      width: 2.5px;
+      height: 2.5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.8;
+    }
+
+    /* ----------------------------------------------------
+       PANEL 1: DIETER RAMS / BRAUN (Plunger Push-Cylinder)
+       ---------------------------------------------------- */
+    .var-braun .dock-bar-unit {
+      background: #ece6da;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 1px #ffffff, 0 0 0 1px #d6cebe;
+    }
+
+    .var-braun .v-knob-socket {
+      width: 33px;
+      height: 33px;
+      border-radius: 50%;
+      background: #201f1e;
+      border: 1.5px solid rgba(0, 0, 0, 0.5);
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.8), 0 1px 1px #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .var-braun .v-knob-gear {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f7f4ed 0%, #ded7c8 60%, #b5ab96 100%);
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 1px #ffffff;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-braun .v-knob-gear::before {
+      content: '';
+      position: absolute;
+      top: 1.5px;
+      left: 50%;
+      width: 2.5px;
+      height: 5px;
+      background: #ea580c;
+      border-radius: 1px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 3px #ea580c;
+    }
+
+    .var-braun .v-knob-gear-core {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ded7c8;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-braun .v-knob-eye {
+      width: 3.5px;
+      height: 3.5px;
+      border-radius: 50%;
+      background: #ea580c;
+      box-shadow: 0 0 4px #ea580c;
+    }
+
+    .var-braun .v-lap-box {
+      background: #201f1e;
+      border: 1px solid rgba(0, 0, 0, 0.5);
+      border-radius: 4px;
+      padding: 3px 6px 2.5px 6px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), 0 1px 1px #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .var-braun .v-lap-pips {
+      display: flex;
+      gap: 3px;
+    }
+
+    .var-braun .v-pip {
+      width: 6px;
+      height: 3px;
+      border-radius: 1px;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8);
+    }
+
+    .var-braun .v-pip.active {
+      background: #ea580c;
+      box-shadow: 0 0 5px #ea580c, inset 0 0.5px 1px #ffffff;
+    }
+
+    .var-braun .v-lap-text {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      font-weight: 700;
+      color: #f7f4ed;
+      letter-spacing: 0.08em;
+      line-height: 1;
+    }
+
+    .var-braun .v-mode-strip {
+      display: flex;
+      gap: 2px;
+      background: #ded7c8;
+      padding: 2px;
+      border-radius: 4px;
+      margin-bottom: 3px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .var-braun .v-mode-btn {
+      font-family: var(--font-grotesk);
+      font-size: 7.5px;
+      font-weight: 700;
+      color: #7a756d;
+      background: transparent;
+      border: none;
+      padding: 1.5px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .var-braun .v-mode-btn.active {
+      background: #272625;
+      color: #f7f4ed;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .var-braun .common-split-flap {
+      background: #201f1e;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 1px 1px #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      color: #f7f4ed;
+    }
+
+    .var-braun .cf-tile {
+      background: #272625;
+      color: #f7f4ed;
+    }
+
+    /* Right: Iconic Tactile Plunger Push-Cylinder (ZERO generic play triangle!) */
+    .var-braun .v-gauge-socket {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #201f1e;
+      border: none;
+      box-shadow: inset 0 2.5px 5px rgba(0, 0, 0, 0.8), 0 1px 1px #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .var-braun .v-braun-plunger {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #ff782e 0%, #ea580c 60%, #c2410c 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 2px 2px rgba(255, 255, 255, 0.5), inset 0 -2px 3px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .var-braun .v-braun-plunger::before {
+      content: '';
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 60% 60%, #ea580c 0%, #a63205 100%);
+      box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(255, 255, 255, 0.3);
+    }
+
+    .var-braun .v-braun-plunger::after {
+      content: '';
+      position: absolute;
+      width: 3.5px;
+      height: 3.5px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 3px #ffffff;
+    }
+
+    .var-braun .v-braun-plunger:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    .var-braun .v-braun-plunger:active {
+      transform: translateY(1.5px) scale(0.95);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    .var-braun .v-micro-dock {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      gap: 8px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-braun .v-keycap {
+      width: 16px;
+      height: 14px;
+      border-radius: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #7a756d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      padding: 0;
+      margin: 0;
+      opacity: 0.8;
+      transition: all 120ms ease;
+    }
+
+    .var-braun .v-keycap:hover {
+      filter: none;
+      opacity: 1;
+      color: #ea580c;
+      transform: translateY(-0.5px);
+    }
+
+    /* ----------------------------------------------------
+       PANEL 2: TEENAGE ENGINEERING (Squircle Modular Key)
+       ---------------------------------------------------- */
+    .var-te .dock-bar-unit {
+      background: #22252a;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border: 1px solid #141619;
+    }
+
+    .var-te .v-squircle-module {
+      width: 35px;
+      height: 35px;
+      border-radius: 6px;
+      background: #f59f00;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .var-te .v-squircle-bolt {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: #7d4f00;
+    }
+    .var-te .v-squircle-bolt.tl { top: 2px; left: 2px; }
+    .var-te .v-squircle-bolt.tr { top: 2px; right: 2px; }
+    .var-te .v-squircle-bolt.bl { bottom: 2px; left: 2px; }
+    .var-te .v-squircle-bolt.br { bottom: 2px; right: 2px; }
+
+    .var-te .v-dark-core-knob {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #18191c;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      position: relative;
+    }
+
+    .var-te .v-dark-core-knob::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 50%;
+      width: 2px;
+      height: 5px;
+      background: #ffffff;
+      border-radius: 1px;
+      transform: translateX(-50%);
+    }
+
+    .var-te .v-te-lap {
+      background: #141619;
+      border-radius: 3px;
+      padding: 2.5px 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .var-te .v-te-reel-dots {
+      display: flex;
+      gap: 2.5px;
+    }
+
+    .var-te .v-te-dot {
+      width: 3.5px;
+      height: 3.5px;
+      border-radius: 50%;
+      background: #3a3e47;
+    }
+
+    .var-te .v-te-dot.active {
+      background: #f59f00;
+      box-shadow: 0 0 5px #f59f00;
+    }
+
+    .var-te .v-te-lap-lbl {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      color: #9299a8;
+      font-weight: 700;
+    }
+
+    .var-te .v-te-modes {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 3px;
+    }
+
+    .var-te .v-te-mode-tab {
+      background: #18191c;
+      color: #727a8a;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: var(--font-mono);
+      font-size: 7px;
+      padding: 2px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .var-te .v-te-mode-tab.active {
+      background: #2a2e36;
+      color: #f59f00;
+      border-color: #f59f00;
+    }
+
+    .var-te .common-split-flap {
+      background: #141619;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #e5e9f0;
+    }
+
+    .var-te .cf-tile {
+      background: #1e2126;
+      color: #f59f00;
+    }
+
+    /* Right: TE Modular Key Switch with Status Ring Aperture */
+    .var-te .v-te-play-key {
+      width: 42px;
+      height: 42px;
+      border-radius: 6px;
+      background: linear-gradient(145deg, #2b2f37 0%, #1c1e23 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .var-te .v-te-play-key:hover {
+      transform: translateY(-1px);
+      border-color: #f59f00;
+    }
+
+    .var-te .v-te-play-key:active {
+      transform: translateY(2px);
+    }
+
+    .var-te .v-te-icon-circle {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 2.5px solid #f59f00;
+      box-shadow: 0 0 8px rgba(245, 159, 0, 0.5);
+    }
+
+    .var-te .v-te-micro-strip {
+      display: flex;
+      gap: 6px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-te .v-te-micro-key {
+      width: 18px;
+      height: 14px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      color: #8b92a0;
+      font-size: 8px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: all 120ms ease;
+    }
+    .var-te .v-te-micro-key:hover {
+      opacity: 1;
+      color: #f59f00;
+      transform: translateY(-0.5px);
+    }
+
+    /* ----------------------------------------------------
+       PANEL 3: OBSIDIAN HI-FI (Rotary Jog Dial Engage)
+       ---------------------------------------------------- */
+    .var-obsidian .dock-bar-unit {
+      background: #111215;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      border: 1px solid #08080a;
+    }
+
+    .var-obsidian .v-obs-knob-cluster {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-obsidian .v-obs-dot-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1.5px dotted rgba(255, 255, 255, 0.25);
+      pointer-events: none;
+    }
+
+    .var-obsidian .v-obs-dial {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #2a2b30 0%, #131417 100%);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .var-obsidian .v-obs-dial::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      width: 2px;
+      height: 6px;
+      background: #00e676;
+      border-radius: 1px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 5px #00e676;
+    }
+
+    .var-obsidian .v-obs-lap {
+      font-family: var(--font-mono);
+      font-size: 7.5px;
+      color: #00e676;
+      background: #090a0c;
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 230, 118, 0.2);
+      letter-spacing: 0.06em;
+    }
+
+    .var-obsidian .v-obs-modes {
+      display: flex;
+      gap: 2px;
+      background: #08090a;
+      padding: 2px;
+      border-radius: 10px;
+      margin-bottom: 3px;
+    }
+
+    .var-obsidian .v-obs-mode-btn {
+      font-family: var(--font-sans);
+      font-size: 7.5px;
+      font-weight: 600;
+      color: #636875;
+      background: transparent;
+      border: none;
+      padding: 1.5px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .var-obsidian .v-obs-mode-btn.active {
+      background: #1a1c22;
+      color: #fff;
+    }
+
+    .var-obsidian .common-split-flap {
+      background: #08090b;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+    }
+
+    .var-obsidian .cf-tile {
+      background: #14151a;
+      color: #ffffff;
+    }
+
+    /* Right: Rotary Jog Dial with Concentric Ring (ZERO love icon!) */
+    .var-obsidian .v-obs-jog-trigger {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 45%, #24262f 0%, #0d0e12 100%);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7), inset 0 1.5px 2px rgba(255, 255, 255, 0.2), inset 0 -2px 3px rgba(0, 0, 0, 0.6);
+      border: 1.5px solid rgba(0, 230, 118, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 120ms ease;
+    }
+
+    .var-obsidian .v-obs-jog-inner {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #00e676;
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.7);
+    }
+
+    .var-obsidian .v-obs-jog-trigger:hover {
+      transform: scale(1.06);
+      border-color: #00e676;
+      box-shadow: 0 0 14px rgba(0, 230, 118, 0.5);
+    }
+
+    .var-obsidian .v-obs-micros {
+      display: flex;
+      gap: 8px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-obsidian .v-obs-concave-btn {
+      width: 16px;
+      height: 14px;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      color: #8c92a0;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: all 120ms ease;
+    }
+    .var-obsidian .v-obs-concave-btn:hover {
+      opacity: 1;
+      color: #00e676;
+      transform: translateY(-0.5px);
+    }
+
+    /* ----------------------------------------------------
+       PANEL 4: ANALOG STUDIO (Latching Rocker Bar)
+       ---------------------------------------------------- */
+    .var-studio .dock-bar-unit {
+      background: linear-gradient(180deg, #30333a 0%, #22252a 100%);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border: 1px solid #16181b;
+    }
+
+    .var-studio .v-conical-collar {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #1c1e22, #3c4048, #1c1e22, #3c4048, #1c1e22);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .var-studio .v-conical-inner {
+      width: 21px;
+      height: 21px;
+      border-radius: 50%;
+      background: #121316;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+
+    .var-studio .v-conical-inner::after {
+      content: '';
+      position: absolute;
+      top: 1.5px;
+      left: 50%;
+      width: 2px;
+      height: 6px;
+      background: #ff5252;
+      border-radius: 1px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 4px #ff5252;
+    }
+
+    .var-studio .v-vu-meter {
+      display: flex;
+      gap: 1.5px;
+      background: #121315;
+      padding: 3px 5px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .var-studio .v-vu-bar {
+      width: 4px;
+      height: 8px;
+      border-radius: 1px;
+      background: #252830;
+    }
+
+    .var-studio .v-vu-bar.green { background: #00e676; box-shadow: 0 0 4px #00e676; }
+    .var-studio .v-vu-bar.yellow { background: #ffd600; box-shadow: 0 0 4px #ffd600; }
+    .var-studio .v-vu-bar.red { background: #ff5252; }
+
+    .var-studio .v-studio-modes {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 3px;
+    }
+
+    .var-studio .v-studio-tab {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      background: #1b1d22;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #9ba1b0;
+      padding: 1.5px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .var-studio .v-studio-tab.active {
+      background: #424754;
+      color: #fff;
+    }
+
+    .var-studio .common-split-flap {
+      background: #141518;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f0f2f5;
+    }
+
+    .var-studio .cf-tile {
+      background: #22242a;
+      color: #f0f2f5;
+    }
+
+    /* Right: Master Studio Latching Rocker Trigger (ENGAGE) */
+    .var-studio .v-rocker-trigger {
+      width: 44px;
+      height: 38px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #ff5252 0%, #b71c1c 100%);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      transition: transform 120ms ease;
+    }
+
+    .var-studio .v-rocker-trigger:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    .var-studio .v-studio-micros {
+      display: flex;
+      gap: 6px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-studio .v-silver-key {
+      width: 18px;
+      height: 14px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      color: #9ba1b0;
+      font-size: 8px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: none;
+      opacity: 0.8;
+      transition: all 120ms ease;
+    }
+    .var-studio .v-silver-key:hover {
+      opacity: 1;
+      color: #ff5252;
+      transform: translateY(-0.5px);
+    }
+
+    /* ----------------------------------------------------
+       PANEL 5: PADUAC (Mechanical Cassette Piano Lever)
+       ---------------------------------------------------- */
+    .var-paduac .dock-bar-unit {
+      background: #d8cebc;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 1px #ffffff;
+      border: 1px solid #b8ab96;
+    }
+
+    .var-paduac .v-paduac-socket {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #50555e;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .var-paduac .v-stepped-dial {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ded9ce 0%, #a69f92 100%);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px #ffffff;
+      position: relative;
+    }
+
+    .var-paduac .v-stepped-dial::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 50%;
+      width: 2px;
+      height: 5px;
+      background: #d32f2f;
+      transform: translateX(-50%);
+    }
+
+    .var-paduac .v-paduac-counter {
+      background: #2b2e34;
+      border-radius: 3px;
+      padding: 2.5px 6px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+      font-family: var(--font-mono);
+      font-size: 7.5px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.1em;
+      border-top: 1.5px solid #d32f2f;
+    }
+
+    .var-paduac .v-paduac-modes {
+      display: flex;
+      gap: 2px;
+      background: #b5a995;
+      padding: 2px;
+      border-radius: 3px;
+      margin-bottom: 3px;
+    }
+
+    .var-paduac .v-paduac-tab {
+      font-family: var(--font-grotesk);
+      font-size: 7.5px;
+      font-weight: 700;
+      color: #4e483e;
+      background: transparent;
+      border: none;
+      padding: 1.5px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .var-paduac .v-paduac-tab.active {
+      background: #d32f2f;
+      color: #fff;
+    }
+
+    .var-paduac .common-split-flap {
+      background: #2b2e34;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+      border: 1.5px solid #d32f2f;
+      color: #ffffff;
+    }
+
+    .var-paduac .cf-tile {
+      background: #3b3f47;
+      color: #fff;
+    }
+
+    /* Right: Cassette Transport Piano Lever Key with Red Pip */
+    .var-paduac .v-piano-key {
+      width: 44px;
+      height: 38px;
+      background: linear-gradient(180deg, #d32f2f 0%, #9a0007 100%);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 1.5px 1px #ffffff, inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+
+    .var-paduac .v-piano-pip {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 4px #fff;
+    }
+
+    .var-paduac .v-piano-label {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.1em;
+    }
+
+    .var-paduac .v-piano-key:hover {
+      transform: translateY(-1px);
+    }
+
+    .var-paduac .v-piano-key:active {
+      transform: translateY(2px);
+    }
+
+    .var-paduac .v-paduac-micros {
+      display: flex;
+      gap: 6px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-paduac .v-paduac-mkey {
+      width: 18px;
+      height: 14px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      color: #615a4f;
+      font-size: 8px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: none;
+      opacity: 0.8;
+      transition: all 120ms ease;
+    }
+    .var-paduac .v-paduac-mkey:hover {
+      opacity: 1;
+      color: #d32f2f;
+      transform: translateY(-0.5px);
+    }
+
+    /* ----------------------------------------------------
+       PANEL 6: CHALK FIELD (Disc Jog-Wheel with Dimple)
+       ---------------------------------------------------- */
+    .var-chalk .dock-bar-unit {
+      background: #f4f3f0;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), inset 0 1px 1px #ffffff;
+      border: 1px solid #ddd9d0;
+    }
+
+    .var-chalk .v-jog-disc {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffffff 0%, #dedbd2 100%);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1px 1px #ffffff;
+      border: 1px solid #ccc7ba;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .var-chalk .v-jog-dimple {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cfcac0;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .var-chalk .v-chalk-lap {
+      font-family: var(--font-grotesk);
+      font-size: 8px;
+      font-weight: 800;
+      color: #333333;
+      background: #e4e0d6;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+
+    .var-chalk .v-chalk-modes {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 3px;
+    }
+
+    .var-chalk .v-chalk-tab {
+      font-family: var(--font-grotesk);
+      font-size: 7.5px;
+      font-weight: 700;
+      color: #7d7768;
+      background: transparent;
+      border: 1px solid #d0cbc0;
+      padding: 1.5px 5px;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .var-chalk .v-chalk-tab.active {
+      background: #262626;
+      color: #fff;
+      border-color: #262626;
+    }
+
+    .var-chalk .common-split-flap {
+      background: #2b2b2b;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+      color: #f5f5f5;
+    }
+
+    .var-chalk .cf-tile {
+      background: #1a1a1a;
+      color: #f5f5f5;
+    }
+
+    /* Right: Safety-Orange Push-Pill (ZERO generic play icon!) */
+    .var-chalk .v-orange-pill-trigger {
+      width: 44px;
+      height: 38px;
+      border-radius: 20px;
+      background: #ff5722;
+      box-shadow: 0 4px 10px rgba(255, 87, 34, 0.45), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.6);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      position: relative;
+      transition: transform 120ms ease;
+    }
+
+    .var-chalk .v-orange-pill-trigger::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 5px #ffffff;
+    }
+
+    .var-chalk .v-orange-pill-trigger:hover {
+      transform: scale(1.04);
+    }
+
+    .var-chalk .v-chalk-micros {
+      display: flex;
+      gap: 8px;
+      height: 14px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .var-chalk .v-chalk-mbtn {
+      width: 16px;
+      height: 14px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      color: #7d7768;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: none;
+      opacity: 0.8;
+      transition: all 120ms ease;
+    }
+    .var-chalk .v-chalk-mbtn:hover {
+      opacity: 1;
+      color: #ff5722;
+      transform: translateY(-0.5px);
+    }
+
+    /* ==========================================================================
+       SECTION 2: 8 TACTILE ACTION CONTROLS & KNOBS (BEYOND THE PLAY BUTTON)
+       ========================================================================== */
+    .action-controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .action-card {
+      background: var(--lab-surface);
+      border: 1px solid var(--lab-border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .action-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      transform: translateY(-2px);
+    }
+
+    .action-card-top {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .action-card-top h4 {
+      font-family: var(--font-grotesk);
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .action-card-top span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--lab-accent);
+    }
+
+    .action-stage {
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .action-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--lab-text);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .action-desc {
+      font-size: 12px;
+      color: var(--lab-text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* Action 1: Master Push-Encoder Knob */
+    .ac1-encoder {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, #30333a 0deg 8deg, #15161a 8deg 16deg);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), inset 0 2px 2px rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+    .ac1-encoder:hover { transform: scale(1.03); }
+    .ac1-encoder:active { transform: scale(0.96); box-shadow: 0 2px 6px rgba(0,0,0,0.8); }
+
+    .ac1-inner-cap {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #2e3138 0%, #16171b 100%);
+      box-shadow: inset 0 1.5px 2px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .ac1-inner-cap::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      width: 3px;
+      height: 10px;
+      background: #ea580c;
+      border-radius: 1.5px;
+      box-shadow: 0 0 5px #ea580c;
+    }
+
+    /* Action 2: Studio Latching Rocker Switch */
+    .ac2-rocker-housing {
+      width: 70px;
+      height: 94px;
+      border-radius: 8px;
+      background: #111215;
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.1);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 6px;
+    }
+    .ac2-rocker-paddle {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      background: linear-gradient(180deg, #ff4d4d 0%, #c62828 100%);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 4px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      transition: all 140ms ease;
+    }
+    .ac2-rocker-housing:active .ac2-rocker-paddle {
+      transform: translateY(3px);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    .ac2-led-bar {
+      width: 22px;
+      height: 3px;
+      background: #ffffff;
+      border-radius: 1.5px;
+      box-shadow: 0 0 6px #ffffff;
+    }
+
+    /* Action 3: Industrial Plunger Push-Cylinder */
+    .ac3-plunger-housing {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #111215;
+      box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.9), 0 1px 1px rgba(255, 255, 255, 0.12);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .ac3-cylinder {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #ff833b 0%, #ea580c 60%, #b83804 100%);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(0, 0, 0, 0.5);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    .ac3-cylinder::before {
+      content: '';
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 60% 60%, #ea580c 0%, #872602 100%);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), 0 1px 1px rgba(255, 255, 255, 0.4);
+    }
+    .ac3-cylinder::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+    }
+    .ac3-plunger-housing:hover .ac3-cylinder {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+    }
+    .ac3-plunger-housing:active .ac3-cylinder {
+      transform: translateY(3px) scale(0.96);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 3px 5px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Action 4: Modular Squircle Key with Status Ring */
+    .ac4-squircle-key {
+      width: 82px;
+      height: 82px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #2c2f37 0%, #16181d 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+    .ac4-squircle-key:hover {
+      border-color: #f59f00;
+      transform: translateY(-2px);
+    }
+    .ac4-squircle-key:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    .ac4-aperture-ring {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3.5px solid #f59f00;
+      box-shadow: 0 0 12px rgba(245, 159, 0, 0.6), inset 0 0 8px rgba(245, 159, 0, 0.3);
+    }
+
+    /* Action 5: Backlit Translucent Jewel Glass "ACTIVATE" Switch */
+    .ac5-glass-bezel {
+      width: 76px;
+      height: 76px;
+      border-radius: 12px;
+      background: #0f1013;
+      padding: 6px;
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .ac5-glass-body {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(255, 152, 0, 0.7) 0%, rgba(230, 81, 0, 0.85) 100%);
+      box-shadow: 0 0 18px rgba(255, 152, 0, 0.5), inset 0 1.5px 2px rgba(255, 255, 255, 0.8), inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      transition: all 120ms ease;
+    }
+    .ac5-glass-bezel:hover .ac5-glass-body {
+      filter: brightness(1.15);
+      box-shadow: 0 0 24px rgba(255, 152, 0, 0.8);
+    }
+    .ac5-glass-bezel:active .ac5-glass-body {
+      transform: translateY(2px);
+    }
+
+    /* Action 6: Mechanical Cassette Piano Lever */
+    .ac6-piano-casing {
+      width: 80px;
+      height: 88px;
+      border-radius: 6px;
+      background: #1e2025;
+      padding: 6px 8px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+      border: 1px solid #141518;
+      display: flex;
+      align-items: flex-start;
+      cursor: pointer;
+    }
+    .ac6-lever {
+      width: 100%;
+      height: 64px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #d32f2f 0%, #850000 100%);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.6), inset 0 1.5px 2px #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 8px;
+      gap: 4px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 800;
+      transition: all 120ms ease;
+    }
+    .ac6-lever::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 6px #ffffff;
+    }
+    .ac6-piano-casing:active .ac6-lever {
+      transform: translateY(6px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Action 7: Master Jog-Wheel with Finger Dimple */
+    .ac7-jog-well {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: #141518;
+      box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .ac7-disc {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: conic-gradient(from 180deg, #e6e6e6 0deg, #a0a0a0 90deg, #f5f5f5 180deg, #a0a0a0 270deg, #e6e6e6 360deg);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6), inset 0 1px 1px #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      position: relative;
+      transition: transform 160ms ease;
+    }
+    .ac7-jog-well:hover .ac7-disc { transform: rotate(45deg); }
+    .ac7-dimple {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #828282;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 1px 1px #ffffff;
+    }
+
+    /* Action 8: Precision Mini Slide-Fader */
+    .ac8-fader-track {
+      width: 60px;
+      height: 100px;
+      border-radius: 8px;
+      background: #121316;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 4px;
+      cursor: pointer;
+      position: relative;
+    }
+    .ac8-fader-track::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      bottom: 14px;
+      width: 4px;
+      background: #08080a;
+      border-radius: 2px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9);
+    }
+    .ac8-fader-cap {
+      position: relative;
+      z-index: 2;
+      width: 46px;
+      height: 24px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #d8d8d8 0%, #8a8a8a 100%);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 120ms ease;
+    }
+    .ac8-fader-line {
+      width: 100%;
+      height: 2px;
+      background: #ea580c;
+      box-shadow: 0 0 4px #ea580c;
+    }
+    .ac8-fader-labels {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 700;
+      color: #616675;
+      padding: 0 4px;
+    }
+
+    /* ==========================================================================
+       SECTION 3: 8 PRACTICE VST KNOBS (100% DEAD CENTER & 0deg DEFAULT)
+       ========================================================================== */
+    .knob-practice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .knob-lab-card {
+      background: var(--lab-surface);
+      border: 1px solid var(--lab-border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: border-color 160ms ease;
+    }
+
+    .knob-lab-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .knob-card-top {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .knob-card-top h4 {
+      font-family: var(--font-grotesk);
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .knob-card-top span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--lab-accent);
+    }
+
+    /* Exact Dead-Center Stage */
+    .knob-stage {
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 0 auto;
+      cursor: grab;
+    }
+
+    .knob-stage:active {
+      cursor: grabbing;
+    }
+
+    .knob-readout {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .knob-desc {
+      font-size: 11px;
+      color: var(--lab-text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ----------------------------------------------------
+       KNOB 1: Dieter Rams Milled Gear Knob (100% Dead Center)
+       ---------------------------------------------------- */
+    .k1-gear-knob {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, #8a8479 0deg 8deg, #59554e 8deg 16deg);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k1-inner-disc {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f7f4ed 0%, #ded7c8 65%, #c2b9a7 100%);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), inset 0 1px 1px #ffffff;
+      border: 1px solid #a89f8f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: auto;
+    }
+
+    .k1-pointer-arrow {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 9px solid #ea580c;
+      transform: translateX(-50%) rotate(180deg);
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+    }
+
+    .k1-inner-text {
+      font-family: var(--font-grotesk);
+      font-size: 10px;
+      font-weight: 800;
+      color: #3b3731;
+      margin-top: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    /* ----------------------------------------------------
+       KNOB 2: Conical Pointer Collar Knob (100% Dead Center)
+       ---------------------------------------------------- */
+    .k2-conical-base {
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      background: conic-gradient(from 45deg, #1c1f24, #414652, #1c1f24, #414652, #1c1f24);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7), inset 0 1.5px 2px rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+    }
+
+    .k2-knob-cylinder {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #2a2d36 0%, #111317 100%);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k2-pointer-line {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 3px;
+      height: 14px;
+      background: #ff5252;
+      border-radius: 1.5px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 6px #ff5252;
+    }
+
+    /* ----------------------------------------------------
+       KNOB 3: Teenage Engineering Squircle (100% Dead Center)
+       ---------------------------------------------------- */
+    .k3-squircle-module {
+      width: 92px;
+      height: 92px;
+      border-radius: 16px;
+      background: #f59f00;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: auto;
+    }
+
+    .k3-hex-bolt {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #754a00;
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.8);
+    }
+    .k3-hex-bolt.tl { top: 6px; left: 6px; }
+    .k3-hex-bolt.tr { top: 6px; right: 6px; }
+    .k3-hex-bolt.bl { bottom: 6px; left: 6px; }
+    .k3-hex-bolt.br { bottom: 6px; right: 6px; }
+
+    .k3-dial {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #1e2025;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k3-dial::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 3px;
+      height: 12px;
+      background: #ffffff;
+      border-radius: 1.5px;
+      transform: translateX(-50%);
+    }
+
+    /* ----------------------------------------------------
+       KNOB 4: Hi-Fi Radial Dot-Arc Volume Knob (100% Dead Center)
+       ---------------------------------------------------- */
+    .k4-dot-arc-wrapper {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+    }
+
+    .k4-svg-arc {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .k4-knob-body {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #2d2f36 0%, #121316 100%);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), inset 0 1.5px 2px rgba(255, 255, 255, 0.3), inset 0 -2px 3px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k4-knob-body::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 3px;
+      height: 14px;
+      background: #00e676;
+      border-radius: 1.5px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 8px #00e676;
+    }
+
+    /* ----------------------------------------------------
+       KNOB 5: Brushed Aluminum Lathe Disc (100% Dead Center)
+       ---------------------------------------------------- */
+    .k5-lathe-ring {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: conic-gradient(from 180deg, #d8d8d8 0deg, #8c8c8c 45deg, #f0f0f0 90deg, #8c8c8c 135deg, #e8e8e8 180deg, #8c8c8c 225deg, #f0f0f0 270deg, #8c8c8c 315deg, #d8d8d8 360deg);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), inset 0 1.5px 2px #ffffff, inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+    }
+
+    .k5-concave-dish {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #b8b8b8 50%, #7d7d7d 100%);
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.6), 0 1px 1px #ffffff;
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k5-marker-dot {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #111111;
+      transform: translateX(-50%);
+      box-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
+    }
+
+    /* ----------------------------------------------------
+       KNOB 6: Heavy Ribbed Potentiometer (100% Dead Center)
+       ---------------------------------------------------- */
+    .k6-ribbed-knob {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background: repeating-conic-gradient(from 0deg, #30333a 0deg 6deg, #15161a 6deg 12deg);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), inset 0 1.5px 2px rgba(255, 255, 255, 0.2);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k6-core-cap {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 45% 40%, #2e3038 0%, #151619 100%);
+      box-shadow: inset 0 1.5px 2px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.6);
+      position: relative;
+      margin: auto;
+    }
+
+    .k6-pointer {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 3px;
+      height: 13px;
+      background: #ff9100;
+      border-radius: 1.5px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 6px #ff9100;
+    }
+
+    /* ----------------------------------------------------
+       KNOB 7: Backlit Radiant Halo Knob (100% Dead Center)
+       ---------------------------------------------------- */
+    .k7-halo-stage {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+    }
+
+    .k7-glow-backdrop {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 70%);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .k7-white-knob {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffffff 0%, #e2e4ea 100%);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), inset 0 1.5px 2px #ffffff;
+      border: 3px solid #141518;
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 50% !important;
+    }
+
+    .k7-white-knob::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      width: 3px;
+      height: 12px;
+      background: #111111;
+      border-radius: 1.5px;
+      transform: translateX(-50%);
+    }
+
+    /* ----------------------------------------------------
+       KNOB 8: Tapered Pointer Selector (100% Dead Center)
+       ---------------------------------------------------- */
+    .k8-stepped-base {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: #d8cebc;
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+      border: 1px solid #b3a58e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: auto;
+    }
+
+    .k8-day-stop {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      font-weight: 700;
+      color: #7d725d;
+    }
+    .k8-day-stop.d1 { top: 4px; left: 50%; transform: translateX(-50%); }
+    .k8-day-stop.d2 { top: 22px; right: 10px; }
+    .k8-day-stop.d3 { bottom: 22px; right: 10px; }
+    .k8-day-stop.d4 { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .k8-day-stop.d5 { bottom: 22px; left: 10px; }
+    .k8-day-stop.d6 { top: 22px; left: 10px; }
+
+    .k8-pointer-tapered {
+      width: 24px;
+      height: 60px;
+      background: linear-gradient(180deg, #f7f4ed 0%, #ded7c8 70%, #b3a894 100%);
+      clip-path: polygon(50% 0%, 100% 85%, 75% 100%, 25% 100%, 0% 85%);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+      border-radius: 2px;
+      position: relative;
+      margin: auto;
+      transform-origin: 50% 70% !important;
+    }
+
+    .k8-pointer-tapered::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      width: 2px;
+      height: 10px;
+      background: #ea580c;
+      transform: translateX(-50%);
+    }
+
+    /* Footer Navigation */
+    .lab-footer {
+      margin-top: 60px;
+      text-align: center;
+      color: var(--lab-text-muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lab-container">
+    
+    <!-- Top Bar -->
+    <header class="lab-header">
+      <div class="lab-title-group">
+        <h1>
+          KRONOS VST & HARDWARE DESIGN LAB
+          <span class="badge-vst">Studio Grade</span>
+        </h1>
+        <p>Interactive tactile audio workbench: 6 dockable panel variations (with zero generic play buttons), 8 innovative physical action controls, and 8 dead-center practice knobs.</p>
+      </div>
+      <div class="lab-stats-strip">
+        <div class="stat-pill"><strong>6</strong> Dockable Panels</div>
+        <div class="stat-pill"><strong>8</strong> Action Controllers</div>
+        <div class="stat-pill"><strong>8</strong> Dead-Center Knobs</div>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         SECTION 1: THE 6 DOCKABLE PANEL CONCEPTS
+         ==================================================================== -->
+    <div class="section-title-bar">
+      <h2>1. The 6 Upgraded Pomodoro Dockable Panel Concepts</h2>
+      <div class="line"></div>
+    </div>
+    <p class="section-desc">Upgraded left and right sections with zero generic play triangles or love icons. Each panel uses authentic hardware audio triggers.</p>
+
+    <div class="panel-showcase-grid">
+
+      <!-- VARIATION 1: Dieter Rams / Braun Masterpiece -->
+      <div class="panel-card var-braun">
+        <div class="panel-card-header">
+          <h3>01. Dieter Rams Braun <span class="variation-tag">Authentic 1972</span></h3>
+          <span class="concept-desc">Milled gear dial + Cassette counter + Plunger push-cylinder</span>
+        </div>
+        <div class="dock-stage">
+          <div class="dock-bar-unit">
+            <!-- Left Zone -->
+            <div class="zone-unit left">
+              <div class="v-knob-socket" title="Settings / Theme Vault">
+                <div class="v-knob-gear">
+                  <div class="v-knob-gear-core">
+                    <span class="v-knob-eye"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="v-lap-box">
+                <div class="v-lap-pips">
+                  <span class="v-pip active"></span>
+                  <span class="v-pip"></span>
+                  <span class="v-pip"></span>
+                  <span class="v-pip"></span>
+                </div>
+                <span class="v-lap-text">LAP 1/4</span>
+              </div>
+            </div>
+
+            <!-- Center Zone -->
+            <div class="zone-unit center">
+              <div class="v-mode-strip">
+                <button class="v-mode-btn active">FOCUS</button>
+                <button class="v-mode-btn">SHORT</button>
+                <button class="v-mode-btn">LONG</button>
+              </div>
+              <div class="common-split-flap">
+                <div class="cf-group">
+                  <div class="cf-tile">2<div class="cf-seam"></div></div>
+                  <div class="cf-tile">5<div class="cf-seam"></div></div>
+                </div>
+                <div class="cf-colon"><span></span><span></span></div>
+                <div class="cf-group">
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Zone (Braun Plunger Cylinder - ZERO generic play icon!) -->
+            <div class="zone-unit right">
+              <div class="v-gauge-socket">
+                <button class="v-braun-plunger" title="Axial Plunger Trigger"></button>
+              </div>
+              <div class="v-micro-dock">
+                <button class="v-keycap">⏭</button>
+                <button class="v-keycap">↺</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIATION 2: Teenage Engineering Rtt-01 Modular -->
+      <div class="panel-card var-te">
+        <div class="panel-card-header">
+          <h3>02. Teenage Engineering <span class="variation-tag">Rtt-01 Modular</span></h3>
+          <span class="concept-desc">Yellow squircle knob + Reel tape meter + Modular key switch</span>
+        </div>
+        <div class="dock-stage">
+          <div class="dock-bar-unit">
+            <!-- Left Zone -->
+            <div class="zone-unit left">
+              <div class="v-squircle-module" title="Settings / Modular Dial">
+                <span class="v-squircle-bolt tl"></span>
+                <span class="v-squircle-bolt tr"></span>
+                <span class="v-squircle-bolt bl"></span>
+                <span class="v-squircle-bolt br"></span>
+                <div class="v-dark-core-knob"></div>
+              </div>
+              <div class="v-te-lap">
+                <div class="v-te-reel-dots">
+                  <span class="v-te-dot active"></span>
+                  <span class="v-te-dot"></span>
+                  <span class="v-te-dot"></span>
+                  <span class="v-te-dot"></span>
+                </div>
+                <span class="v-te-lap-lbl">01/04</span>
+              </div>
+            </div>
+
+            <!-- Center Zone -->
+            <div class="zone-unit center">
+              <div class="v-te-modes">
+                <span class="v-te-mode-tab active">POMO</span>
+                <span class="v-te-mode-tab">REST</span>
+                <span class="v-te-mode-tab">DEEP</span>
+              </div>
+              <div class="common-split-flap">
+                <div class="cf-group">
+                  <div class="cf-tile">2<div class="cf-seam"></div></div>
+                  <div class="cf-tile">5<div class="cf-seam"></div></div>
+                </div>
+                <div class="cf-colon"><span></span><span></span></div>
+                <div class="cf-group">
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Zone (Modular Key with Neon Ring Aperture) -->
+            <div class="zone-unit right">
+              <div class="v-te-play-key" title="Tactile Module Trigger">
+                <div class="v-te-icon-circle"></div>
+              </div>
+              <div class="v-te-micro-strip">
+                <button class="v-te-micro-key">SKIP</button>
+                <button class="v-te-micro-key">RST</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIATION 3: At Peace / Obsidian Hi-Fi -->
+      <div class="panel-card var-obsidian">
+        <div class="panel-card-header">
+          <h3>03. Obsidian Hi-Fi <span class="variation-tag">At Peace UI</span></h3>
+          <span class="concept-desc">Concentric dot-scale dial + Jewel pill tally + Rotary jog trigger</span>
+        </div>
+        <div class="dock-stage">
+          <div class="dock-bar-unit">
+            <!-- Left Zone -->
+            <div class="zone-unit left">
+              <div class="v-obs-knob-cluster" title="Vault Rotary">
+                <div class="v-obs-dot-ring"></div>
+                <div class="v-obs-dial"></div>
+              </div>
+              <span class="v-obs-lap">LAP 01·04</span>
+            </div>
+
+            <!-- Center Zone -->
+            <div class="zone-unit center">
+              <div class="v-obs-modes">
+                <button class="v-obs-mode-btn active">FOCUS</button>
+                <button class="v-obs-mode-btn">SHORT</button>
+                <button class="v-obs-mode-btn">LONG</button>
+              </div>
+              <div class="common-split-flap">
+                <div class="cf-group">
+                  <div class="cf-tile">2<div class="cf-seam"></div></div>
+                  <div class="cf-tile">5<div class="cf-seam"></div></div>
+                </div>
+                <div class="cf-colon"><span></span><span></span></div>
+                <div class="cf-group">
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Zone (Master Rotary Jog Encoder - ZERO love icon!) -->
+            <div class="zone-unit right">
+              <div class="v-obs-jog-trigger" title="Audio Rotary Push Trigger">
+                <div class="v-obs-jog-inner"></div>
+              </div>
+              <div class="v-obs-micros">
+                <button class="v-obs-concave-btn">+</button>
+                <button class="v-obs-concave-btn">-</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIATION 4: Analog Studio Console -->
+      <div class="panel-card var-studio">
+        <div class="panel-card-header">
+          <h3>04. Analog Studio VST <span class="variation-tag">Pro Audio Rack</span></h3>
+          <span class="concept-desc">Conical collar pointer + VU meter LED ladder + Latching rocker</span>
+        </div>
+        <div class="dock-stage">
+          <div class="dock-bar-unit">
+            <!-- Left Zone -->
+            <div class="zone-unit left">
+              <div class="v-conical-collar" title="Calibrated Potentiometer">
+                <div class="v-conical-inner"></div>
+              </div>
+              <div class="v-vu-meter">
+                <span class="v-vu-bar green"></span>
+                <span class="v-vu-bar green"></span>
+                <span class="v-vu-bar yellow"></span>
+                <span class="v-vu-bar red"></span>
+              </div>
+            </div>
+
+            <!-- Center Zone -->
+            <div class="zone-unit center">
+              <div class="v-studio-modes">
+                <button class="v-studio-tab active">FOC</button>
+                <button class="v-studio-tab">BRK</button>
+                <button class="v-studio-tab">LNG</button>
+              </div>
+              <div class="common-split-flap">
+                <div class="cf-group">
+                  <div class="cf-tile">2<div class="cf-seam"></div></div>
+                  <div class="cf-tile">5<div class="cf-seam"></div></div>
+                </div>
+                <div class="cf-colon"><span></span><span></span></div>
+                <div class="cf-group">
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Zone (Studio Latching Rocker Trigger) -->
+            <div class="zone-unit right">
+              <div class="v-rocker-trigger" title="Studio Engage Switch">
+                ENG
+              </div>
+              <div class="v-studio-micros">
+                <button class="v-silver-key">STEP</button>
+                <button class="v-silver-key">CLR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIATION 5: Paduac Retro-Industrial Boombox -->
+      <div class="panel-card var-paduac">
+        <div class="panel-card-header">
+          <h3>05. Paduac Industrial <span class="variation-tag">Cassette Deck</span></h3>
+          <span class="concept-desc">Stepped aluminum pot + Tape roll counter + Piano transport lever</span>
+        </div>
+        <div class="dock-stage">
+          <div class="dock-bar-unit">
+            <!-- Left Zone -->
+            <div class="zone-unit left">
+              <div class="v-paduac-socket" title="Aluminum Potentiometer">
+                <div class="v-stepped-dial"></div>
+              </div>
+              <div class="v-paduac-counter">TAPE 001</div>
+            </div>
+
+            <!-- Center Zone -->
+            <div class="zone-unit center">
+              <div class="v-paduac-modes">
+                <button class="v-paduac-tab active">REC</button>
+                <button class="v-paduac-tab">CUE</button>
+                <button class="v-paduac-tab">PLAY</button>
+              </div>
+              <div class="common-split-flap">
+                <div class="cf-group">
+                  <div class="cf-tile">2<div class="cf-seam"></div></div>
+                  <div class="cf-tile">5<div class="cf-seam"></div></div>
+                </div>
+                <div class="cf-colon"><span></span><span></span></div>
+                <div class="cf-group">
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Zone (Cassette Mechanical Piano Key) -->
+            <div class="zone-unit right">
+              <button class="v-piano-key" title="Mechanical Piano Transport">
+                <span class="v-piano-pip"></span>
+                <span class="v-piano-label">RUN</span>
+              </button>
+              <div class="v-paduac-micros">
+                <button class="v-paduac-mkey">FF</button>
+                <button class="v-paduac-mkey">REW</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VARIATION 6: Chalk Industrial / OP-Field -->
+      <div class="panel-card var-chalk">
+        <div class="panel-card-header">
+          <h3>06. Chalk Field <span class="variation-tag">Pure Brutalism</span></h3>
+          <span class="concept-desc">Disc jog wheel + Segmented badge + Safety-orange push-pill</span>
+        </div>
+        <div class="dock-stage">
+          <div class="dock-bar-unit">
+            <!-- Left Zone -->
+            <div class="zone-unit left">
+              <div class="v-jog-disc" title="Jog Wheel Disc">
+                <div class="v-jog-dimple"></div>
+              </div>
+              <span class="v-chalk-lap">CYCLE 1</span>
+            </div>
+
+            <!-- Center Zone -->
+            <div class="zone-unit center">
+              <div class="v-chalk-modes">
+                <button class="v-chalk-tab active">SESSION</button>
+                <button class="v-chalk-tab">PAUSE</button>
+              </div>
+              <div class="common-split-flap">
+                <div class="cf-group">
+                  <div class="cf-tile">2<div class="cf-seam"></div></div>
+                  <div class="cf-tile">5<div class="cf-seam"></div></div>
+                </div>
+                <div class="cf-colon"><span></span><span></span></div>
+                <div class="cf-group">
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                  <div class="cf-tile">0<div class="cf-seam"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Zone (Safety-Orange Push-Pill - ZERO play icon!) -->
+            <div class="zone-unit right">
+              <button class="v-orange-pill-trigger" title="Axial Push-Pill Trigger"></button>
+              <div class="v-chalk-micros">
+                <button class="v-chalk-mbtn">▶|</button>
+                <button class="v-chalk-mbtn">↺</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================
+         SECTION 2: 8 TACTILE ACTION CONTROLS & KNOBS (BEYOND THE PLAY BUTTON)
+         ==================================================================== -->
+    <div class="section-title-bar">
+      <h2>2. Eight Innovative Action Controls & Knobs (Beyond the Traditional Play Button)</h2>
+      <div class="line"></div>
+    </div>
+    <p class="section-desc">Real physical VST and audio hardware switches, rotary push-encoders, plungers, and levers designed to activate your Pomodoro without looking like a generic video player.</p>
+
+    <div class="action-controls-grid">
+
+      <!-- Action 1: Master Push-Encoder Knob -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>01. Rotary Push-Encoder</h4>
+          <span>Master Dial</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac1-encoder" title="Push or Turn to Engage">
+            <div class="ac1-inner-cap"></div>
+          </div>
+        </div>
+        <span class="action-badge">PUSH TO ACTIVATE</span>
+        <p class="action-desc">High-torque milled aluminum rotary encoder. Turn to adjust session length, press down to engage.</p>
+      </div>
+
+      <!-- Action 2: Studio Latching Rocker Switch -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>02. Latching Rocker Switch</h4>
+          <span>Studio Paddle</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac2-rocker-housing" title="Flip to Engage">
+            <div class="ac2-rocker-paddle">
+              <span class="ac2-led-bar"></span>
+              <span>ENGAGE</span>
+            </div>
+          </div>
+        </div>
+        <span class="action-badge">FLIP ENGAGE / STANDBY</span>
+        <p class="action-desc">Tactile dual-state rocker switch. Flips down with a heavy mechanical clunk and illuminated neon indicator.</p>
+      </div>
+
+      <!-- Action 3: Industrial Plunger Push-Cylinder -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>03. Axial Plunger Cylinder</h4>
+          <span>Braun Hardware</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac3-plunger-housing" title="Press Plunger">
+            <div class="ac3-cylinder"></div>
+          </div>
+        </div>
+        <span class="action-badge">AXIAL PLUNGER PRESS</span>
+        <p class="action-desc">Chunky safety-orange cylinder rising out of a precision socket with a finger-sculpted thumb dish and jewel pip.</p>
+      </div>
+
+      <!-- Action 4: Modular Squircle Key with Status Ring -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>04. Modular Squircle Key</h4>
+          <span>TE OP-Field</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac4-squircle-key" title="Press Module">
+            <div class="ac4-aperture-ring"></div>
+          </div>
+        </div>
+        <span class="action-badge">NEON APERTURE KEY</span>
+        <p class="action-desc">Beveled squircle modular synthesizer keycap with an illuminated glowing amber status ring.</p>
+      </div>
+
+      <!-- Action 5: Backlit Translucent Glass Switch -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>05. Amber Glass FX Switch</h4>
+          <span>At Peace UI</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac5-glass-bezel" title="Click Translucent Glass">
+            <div class="ac5-glass-body">
+              <span>RUN</span>
+            </div>
+          </div>
+        </div>
+        <span class="action-badge">INCANDESCENT GLASS</span>
+        <p class="action-desc">Smoky amber translucent acrylic button with internal incandescent backlight and light refraction.</p>
+      </div>
+
+      <!-- Action 6: Mechanical Cassette Piano Lever -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>06. Cassette Piano Lever</h4>
+          <span>Boombox Transport</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac6-piano-casing" title="Depress Piano Key">
+            <div class="ac6-lever">
+              <span>START</span>
+            </div>
+          </div>
+        </div>
+        <span class="action-badge">CANTILEVER LEVER</span>
+        <p class="action-desc">Stepped physical piano key transport with authentic cantilever travel and mechanical latching.</p>
+      </div>
+
+      <!-- Action 7: Master Jog-Wheel with Dimple -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>07. Jog-Wheel with Dimple</h4>
+          <span>Disc Wheel</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac7-jog-well" title="Spin or Tap Disc">
+            <div class="ac7-disc">
+              <div class="ac7-dimple"></div>
+            </div>
+          </div>
+        </div>
+        <span class="action-badge">SPIN JOG / TAP DISK</span>
+        <p class="action-desc">Flush-mounted anisotropic aluminum jog disc with an eccentric single-finger dimple for tactile scrubbing.</p>
+      </div>
+
+      <!-- Action 8: Precision Mini Slide-Fader -->
+      <div class="action-card">
+        <div class="action-card-top">
+          <h4>08. Miniature Slide-Fader</h4>
+          <span>Audio Console</span>
+        </div>
+        <div class="action-stage">
+          <div class="ac8-fader-track" title="Slide between Stop and Run">
+            <span class="ac8-fader-labels"><span>STOP</span><span>RUN</span></span>
+            <div class="ac8-fader-cap">
+              <span class="ac8-fader-line"></span>
+            </div>
+          </div>
+        </div>
+        <span class="action-badge">SLIDE TO ENGAGE</span>
+        <p class="action-desc">Smooth mechanical fader track with a ribbed metal cap that slides between resting and active states.</p>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================
+         SECTION 3: 8 PRACTICE VST KNOBS (100% DEAD CENTER & 0deg DEFAULT)
+         ==================================================================== -->
+    <div class="section-title-bar">
+      <h2>3. Eight Interactive Practice VST Knobs (100% Dead Center, 0&deg; Default)</h2>
+      <div class="line"></div>
+    </div>
+    <p class="section-desc">All knobs are mathematically centered, balanced, and resting at true vertical 0&deg; (12 o'clock). Click and drag vertically or scroll to rotate.</p>
+
+    <div class="knob-practice-grid">
+
+      <!-- Knob 1: Dieter Rams Milled Gear Knob -->
+      <div class="knob-lab-card" data-knob-id="k1" data-min="0" data-max="100" data-val="0" data-unit=" MAR">
+        <div class="knob-card-top">
+          <h4>01. Serrated Gear Wheel</h4>
+          <span>Braun Image 5</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k1-gear-knob" id="knob-k1">
+            <div class="k1-inner-disc">
+              <span class="k1-pointer-arrow"></span>
+              <span class="k1-inner-text">0 MAR</span>
+            </div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k1">0 MAR</div>
+        <p class="knob-desc">Gear-toothed milled perimeter collar with sunken cream face and safety-orange pointer arrow.</p>
+      </div>
+
+      <!-- Knob 2: Conical Pointer Collar Knob -->
+      <div class="knob-lab-card" data-knob-id="k2" data-min="0" data-max="10" data-val="5.0" data-unit="">
+        <div class="knob-card-top">
+          <h4>02. Conical Collar Pointer</h4>
+          <span>Studio Image 3</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k2-conical-base">
+            <div class="k2-knob-cylinder" id="knob-k2">
+              <span class="k2-pointer-line"></span>
+            </div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k2">5.0</div>
+        <p class="knob-desc">Wide flared conical skirt base with degree tick marks and cylindrical body with neon needle.</p>
+      </div>
+
+      <!-- Knob 3: Teenage Engineering Yellow Squircle -->
+      <div class="knob-lab-card" data-knob-id="k3" data-min="0" data-max="100" data-val="50" data-unit="%">
+        <div class="knob-card-top">
+          <h4>03. Yellow Modular Squircle</h4>
+          <span>TE Rtt-01 Image 2</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k3-squircle-module">
+            <span class="k3-hex-bolt tl"></span>
+            <span class="k3-hex-bolt tr"></span>
+            <span class="k3-hex-bolt bl"></span>
+            <span class="k3-hex-bolt br"></span>
+            <div class="k3-dial" id="knob-k3"></div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k3">50%</div>
+        <p class="knob-desc">Vibrant squircle block module with corner hex screws and a dark rotary dial in the center.</p>
+      </div>
+
+      <!-- Knob 4: Hi-Fi Radial Dot-Arc Master Volume -->
+      <div class="knob-lab-card" data-knob-id="k4" data-min="0" data-max="100" data-val="50" data-unit="%">
+        <div class="knob-card-top">
+          <h4>04. Radial Dot-Arc Scale</h4>
+          <span>At Peace Image 1</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k4-dot-arc-wrapper">
+            <svg class="k4-svg-arc" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="2 6" />
+            </svg>
+            <div class="k4-knob-body" id="knob-k4"></div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k4">Volume 50%</div>
+        <p class="knob-desc">Obsidian dark finish with concentric dot scale gauge and vibrant green pointer.</p>
+      </div>
+
+      <!-- Knob 5: Brushed Aluminum Lathe-Turned Disc -->
+      <div class="knob-lab-card" data-knob-id="k5" data-min="0" data-max="127" data-val="64" data-unit="">
+        <div class="knob-card-top">
+          <h4>05. Anisotropic Lathe Disc</h4>
+          <span>Skeuo Image 4</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k5-lathe-ring">
+            <div class="k5-concave-dish" id="knob-k5">
+              <span class="k5-marker-dot"></span>
+            </div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k5">CC 64</div>
+        <p class="knob-desc">Brushed anisotropic lathe-cut reflections with a concave thumb-sculpted dish center.</p>
+      </div>
+
+      <!-- Knob 6: Heavy Ribbed Industrial Potentiometer -->
+      <div class="knob-lab-card" data-knob-id="k6" data-min="-24" data-max="12" data-val="-6.0" data-unit=" dB">
+        <div class="knob-card-top">
+          <h4>06. Heavy Ribbed Knurling</h4>
+          <span>Skeuo Image 4</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k6-ribbed-knob" id="knob-k6">
+            <div class="k6-core-cap">
+              <span class="k6-pointer"></span>
+            </div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k6">-6.0 dB</div>
+        <p class="knob-desc">Heavy milled perimeter knurling for studio grip, deep chamfered rim, and glowing amber marker.</p>
+      </div>
+
+      <!-- Knob 7: Backlit Radiant Halo Studio Knob -->
+      <div class="knob-lab-card" data-knob-id="k7" data-min="20" data-max="20000" data-val="632" data-unit=" Hz">
+        <div class="knob-card-top">
+          <h4>07. Backlit Radiant Halo</h4>
+          <span>Audio UI Image 4</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k7-halo-stage">
+            <div class="k7-glow-backdrop"></div>
+            <div class="k7-white-knob" id="knob-k7"></div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k7">632 Hz</div>
+        <p class="knob-desc">Bone-white cylindrical body with black rubber grip rim and radiant diffuse LED halo backdrop.</p>
+      </div>
+
+      <!-- Knob 8: Tapered Day-Pointer Toggle Dial -->
+      <div class="knob-lab-card" data-knob-id="k8" data-min="1" data-max="7" data-val="1" data-unit="">
+        <div class="knob-card-top">
+          <h4>08. Tapered Pointer Selector</h4>
+          <span>Braun Image 5</span>
+        </div>
+        <div class="knob-stage">
+          <div class="k8-stepped-base">
+            <span class="k8-day-stop d1">MON</span>
+            <span class="k8-day-stop d2">TUE</span>
+            <span class="k8-day-stop d3">WED</span>
+            <span class="k8-day-stop d4">THU</span>
+            <span class="k8-day-stop d5">FRI</span>
+            <span class="k8-day-stop d6">SUN</span>
+            <div class="k8-pointer-tapered" id="knob-k8"></div>
+          </div>
+        </div>
+        <div class="knob-readout" id="readout-k8">MON (STAGE 1)</div>
+        <p class="knob-desc">Tapered bone-white pointer dial rotating to calibrated physical stops.</p>
+      </div>
+
+    </div>
+
+    <footer class="lab-footer">
+      <p>Kronos VST & Hardware Design Laboratory &bull; NeoGraphs Plugin Architecture &bull; Built for High-Tactile Audio & Productivity Control</p>
+    </footer>
+
+  </div>
+
+  <!-- Interactive JavaScript Engine -->
+  <script>
+    (function() {
+      const knobs = document.querySelectorAll('.knob-lab-card');
+      const dayNames = ['', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+      knobs.forEach(card => {
+        const knobId = card.getAttribute('data-knob-id');
+        const knobEl = document.getElementById('knob-' + knobId);
+        const readoutEl = document.getElementById('readout-' + knobId);
+        const min = parseFloat(card.getAttribute('data-min'));
+        const max = parseFloat(card.getAttribute('data-max'));
+        const unit = card.getAttribute('data-unit') || '';
+
+        // Rotary bounds: -135deg (min) to +135deg (max).
+        // 0deg is DEAD CENTER (pointing straight up at 12 o'clock).
+        const minAngle = -135;
+        const maxAngle = 135;
+
+        function updateKnob(angle) {
+          knobEl.style.transform = `rotate(${angle}deg)`;
+          const ratio = (angle - minAngle) / (maxAngle - minAngle);
+          let currentVal;
+
+          if (knobId === 'k8') {
+            const stopIndex = Math.min(6, Math.max(1, Math.round(1 + ratio * 5)));
+            readoutEl.textContent = `${dayNames[stopIndex]} (STAGE ${stopIndex})`;
+            return;
+          }
+
+          if (knobId === 'k6') {
+            currentVal = (min + ratio * (max - min)).toFixed(1);
+            readoutEl.textContent = (currentVal > 0 ? '+' : '') + currentVal + unit;
+          } else if (knobId === 'k7') {
+            currentVal = Math.round(min * Math.pow(max / min, ratio));
+            readoutEl.textContent = currentVal + unit;
+          } else if (knobId === 'k1') {
+            currentVal = Math.round(min + ratio * (max - min));
+            readoutEl.textContent = currentVal + unit;
+            const innerText = knobEl.querySelector('.k1-inner-text');
+            if (innerText) innerText.textContent = currentVal + unit;
+          } else if (knobId === 'k2') {
+            currentVal = (min + ratio * (max - min)).toFixed(1);
+            readoutEl.textContent = currentVal;
+          } else {
+            currentVal = Math.round(min + ratio * (max - min));
+            readoutEl.textContent = (knobId === 'k4' ? 'Volume ' : '') + currentVal + unit;
+          }
+        }
+
+        // DEFAULT TO TRUE VERTICAL DEAD CENTER: 0 DEGREES!
+        let currentAngle = 0;
+        updateKnob(0);
+
+        // Drag tracking (drag up/down to rotate smoothly)
+        let isDragging = false;
+        let startY = 0;
+        let startAngle = 0;
+
+        card.querySelector('.knob-stage').addEventListener('mousedown', function(e) {
+          isDragging = true;
+          startY = e.clientY;
+          startAngle = currentAngle;
+          document.body.style.cursor = 'grabbing';
+          e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          const deltaY = startY - e.clientY; // drag up = increase
+          const sensitivity = 1.3;
+          let newAngle = startAngle + deltaY * sensitivity;
+          newAngle = Math.max(minAngle, Math.min(maxAngle, newAngle));
+          currentAngle = newAngle;
+          updateKnob(currentAngle);
+        });
+
+        window.addEventListener('mouseup', function() {
+          if (isDragging) {
+            isDragging = false;
+            document.body.style.cursor = '';
+          }
+        });
+
+        // Mouse wheel support
+        card.querySelector('.knob-stage').addEventListener('wheel', function(e) {
+          e.preventDefault();
+          const step = (e.deltaY < 0 ? 5 : -5);
+          currentAngle = Math.max(minAngle, Math.min(maxAngle, currentAngle + step));
+          updateKnob(currentAngle);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

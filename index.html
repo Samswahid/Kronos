@@ -92,26 +92,20 @@
               <!-- INJECTED KRONOS DOCKABLE EXTENSION -->
               <div id="kronos-dock-bar" class="kronos-bar dot-grid-bg" role="region" aria-label="Kronos Focus Bar">
                 
-                <!-- ZONE A: Tactile Rotary Crown & Minimalist Lap Channel -->
+                <!-- ZONE A: Modular Squircle Rotary & Inset Lap Channel -->
                 <div class="kronos-zone zone-left">
-                  <!-- Custom Machined Rotary Crown (Settings Launcher) -->
-                  <button id="kronos-crown-btn" class="tactile-crown-trigger" aria-label="Open Session Vault">
-                    <div class="crown-chassis">
-                      <div class="crown-rim">
-                        <div class="knurl-rib k1"></div>
-                        <div class="knurl-rib k2"></div>
-                        <div class="knurl-rib k3"></div>
-                        <div class="knurl-rib k4"></div>
-                        <div class="knurl-rib k5"></div>
-                        <div class="knurl-rib k6"></div>
-                      </div>
-                      <div class="crown-core">
-                        <span class="crown-amber-eye"></span>
-                      </div>
+                  <!-- Modular Squircle Rotary (Settings Launcher) -->
+                  <button id="kronos-crown-btn" class="squircle-modular-trigger" aria-label="Open Session Vault" title="Open Session Vault">
+                    <span class="squircle-bolt tl"></span>
+                    <span class="squircle-bolt tr"></span>
+                    <span class="squircle-bolt bl"></span>
+                    <span class="squircle-bolt br"></span>
+                    <div class="squircle-core-knob">
+                      <span class="squircle-notch"></span>
                     </div>
                   </button>
 
-                  <!-- Industrial Segmented Lap Indicator -->
+                  <!-- Teenage Engineering Inset Lap Indicator -->
                   <div class="lap-segment-channel" aria-label="Pomodoro cycle progress">
                     <div class="lap-pips-row">
                       <span class="lap-pip active" data-lap="1"></span>
@@ -119,7 +113,7 @@
                       <span class="lap-pip" data-lap="3"></span>
                       <span class="lap-pip" data-lap="4"></span>
                     </div>
-                    <span class="lap-counter-label" id="dock-lap-label">LAP 1/4</span>
+                    <span class="lap-counter-label" id="dock-lap-label">01/04</span>
                   </div>
                 </div>
 
@@ -180,44 +174,39 @@
                   </div>
                 </div>
 
-                <!-- ZONE C: Tactile Ring Gauge & Play/Skip Controls -->
+                <!-- ZONE C: Tactile Ring Gauge & Axial Plunger Controls -->
                 <div class="kronos-zone zone-right">
-                  <!-- Circular Gauge & Concave Play/Pause Button -->
+                  <!-- Circular Gauge & Axial Plunger Cylinder -->
                   <div class="gauge-button-capsule">
-                    <!-- SVG Progress Ring Gauge -->
-                    <svg class="progress-ring-svg" width="54" height="54" viewBox="0 0 54 54">
-                      <!-- Base Track -->
-                      <circle class="ring-track" cx="27" cy="27" r="22" />
-                      <!-- Elapsed / Remaining Arc -->
-                      <circle id="kronos-progress-arc" class="ring-arc" cx="27" cy="27" r="22" />
+                    <svg class="progress-ring-svg" width="44" height="44" viewBox="0 0 44 44">
+                      <circle class="ring-track" cx="22" cy="22" r="18" />
+                      <circle id="kronos-progress-arc" class="ring-arc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="113.1" />
                     </svg>
 
-                    <!-- Tactile Concave Push-Button Trigger -->
-                    <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer">
-                      <span class="btn-face">
-                        <!-- Play Icon -->
-                        <svg class="icon-glyph glyph-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                          <polygon points="8 5 19 12 8 19"></polygon>
-                        </svg>
-                        <!-- Pause Icon -->
-                        <svg class="icon-glyph glyph-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                          <rect x="6" y="5" width="4" height="14" rx="1"></rect>
-                          <rect x="14" y="5" width="4" height="14" rx="1"></rect>
-                        </svg>
-                      </span>
+                    <!-- Axial Plunger Cylinder Push-Switch -->
+                    <button id="kronos-toggle-btn" class="axial-plunger-btn play-pause-trigger" aria-label="Start or Pause Timer" title="Start or Pause Timer">
+                      <div class="plunger-dish">
+                        <span class="btn-face">
+                          <span class="plunger-pip glyph-play"></span>
+                          <span class="plunger-bars glyph-pause" style="display: none;">
+                            <span class="p-bar"></span>
+                            <span class="p-bar"></span>
+                          </span>
+                        </span>
+                      </div>
                     </button>
                   </div>
 
-                  <!-- Tactical Micro Lap / Skip Buttons -->
+                  <!-- Micro Actions (Borderless, Zero-Background, Ample Clearance) -->
                   <div class="micro-actions">
-                    <button id="kronos-skip-btn" class="micro-icon-btn" aria-label="Complete or Skip Lap">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <button id="kronos-skip-btn" class="micro-icon-btn" aria-label="Complete or Skip Lap" title="Skip Lap">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="5 4 15 12 5 20 5 4"></polygon>
                         <line x1="19" y1="5" x2="19" y2="19"></line>
                       </svg>
                     </button>
-                    <button id="kronos-reset-btn" class="micro-icon-btn" aria-label="Reset Timer">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <button id="kronos-reset-btn" class="micro-icon-btn" aria-label="Reset Timer" title="Reset Timer">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                         <path d="M3 3v5h5"></path>
                       </svg>

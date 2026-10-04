@@ -69,6 +69,8 @@
     }
   }
 
+  window.applyTheme = applyTheme;
+
   // Listen for preference, theme, or session updates from floating window
   if (window.KronosStorage && window.KronosStorage.onSync) {
     window.KronosStorage.onSync(function (payload) {
@@ -221,8 +223,11 @@
   const lapPips = document.querySelectorAll('.lap-pip');
   const dockLapLabel = document.getElementById('dock-lap-label');
 
-  const RING_CIRCUMFERENCE = 138.23;
-  progressArc.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+  const RING_CIRCUMFERENCE = 113.1;
+  if (progressArc) {
+    progressArc.style.strokeDasharray = `${RING_CIRCUMFERENCE}px`;
+    progressArc.setAttribute('stroke-dasharray', `${RING_CIRCUMFERENCE}`);
+  }
 
   let prevDigits = { m1: '', m2: '', s1: '', s2: '' };
 
@@ -286,15 +291,18 @@
     updateTile(tileS2, sStr[1], 's2', skipAnim);
 
     const fraction = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-    const offset = RING_CIRCUMFERENCE * (1 - fraction);
-    progressArc.style.strokeDashoffset = `${offset}`;
+    const offset = (RING_CIRCUMFERENCE * (1 - fraction)).toFixed(2);
+    if (progressArc) {
+      progressArc.style.setProperty('stroke-dashoffset', `${offset}px`, 'important');
+      progressArc.setAttribute('stroke-dashoffset', `${offset}`);
 
-    if (currentPhase === 'focus') {
-      progressArc.style.stroke = 'var(--accent-amber)';
-    } else if (currentPhase === 'short_break') {
-      progressArc.style.stroke = 'var(--text-body)';
-    } else {
-      progressArc.style.stroke = 'var(--accent-teal)';
+      if (currentPhase === 'focus') {
+        progressArc.style.setProperty('stroke', 'var(--theme-accent-color, #ea580c)', 'important');
+      } else if (currentPhase === 'short_break') {
+        progressArc.style.setProperty('stroke', 'var(--theme-font-color, #ffffff)', 'important');
+      } else {
+        progressArc.style.setProperty('stroke', 'var(--accent-teal, #14b8a6)', 'important');
+      }
     }
   }
 
