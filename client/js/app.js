@@ -369,8 +369,8 @@
     playMechanicalClick('press');
     isRunning = true;
     toggleBtn.classList.add('running');
-    playGlyph.style.display = 'block';
-    pauseGlyph.style.display = 'none';
+    playGlyph.style.display = 'none';
+    pauseGlyph.style.display = 'block';
 
     timerInterval = setInterval(() => {
       if (remainingSeconds > 0) {
@@ -388,8 +388,8 @@
     playMechanicalClick('release');
     isRunning = false;
     toggleBtn.classList.remove('running');
-    playGlyph.style.display = 'none';
-    pauseGlyph.style.display = 'block';
+    playGlyph.style.display = 'block';
+    pauseGlyph.style.display = 'none';
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;

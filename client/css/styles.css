@@ -539,14 +539,14 @@ html, body {
   transition: stroke-dashoffset 180ms linear, stroke 180ms ease, opacity 120ms ease !important;
 }
 
-/* Tactile Push-Button Trigger - centred with inset/margin:auto (even 30px => no half-pixel blur) */
+/* Tactile Push-Button Trigger - centred with inset/margin:auto (even 26px in 44px capsule => 9px each side, no half-pixel blur) */
 .tactile-round-btn, .axial-plunger-btn {
   position: absolute !important;
   inset: 0 !important;
   margin: auto !important;
   transform: none !important;
-  width: 30px !important;
-  height: 30px !important;
+  width: 26px !important;
+  height: 26px !important;
   border-radius: 50% !important;
   /* Domed face lit from dead centre — no directional highlight */
   background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 55%, rgba(0, 0, 0, 0.18) 100%), var(--theme-plate-color, #232326) !important;
@@ -607,30 +607,32 @@ html, body {
   position: static !important;
   transform: none !important;
   overflow: visible !important;
+  width: 10px !important;
+  height: 10px !important;
   margin: 0 !important;
   padding: 0 !important;
   flex-shrink: 0 !important;
 }
 
-/* User requirement: when NOT playing -> PAUSE icon; when PLAYING -> PLAY icon */
+/* Stopped -> PLAY icon (press to start); Running -> PAUSE icon (press to pause) */
 .tactile-round-btn .btn-face .glyph-play,
 .axial-plunger-btn .btn-face .glyph-play {
-  display: none !important;
+  display: block !important;
 }
 
 .tactile-round-btn .btn-face .glyph-pause,
 .axial-plunger-btn .btn-face .glyph-pause {
-  display: block !important;
+  display: none !important;
 }
 
 .tactile-round-btn.running .btn-face .glyph-play,
 .axial-plunger-btn.running .btn-face .glyph-play {
-  display: block !important;
+  display: none !important;
 }
 
 .tactile-round-btn.running .btn-face .glyph-pause,
 .axial-plunger-btn.running .btn-face .glyph-pause {
-  display: none !important;
+  display: block !important;
 }
 
 .tactile-round-btn.running .btn-face,
