@@ -27,11 +27,46 @@
   let remainingSeconds = totalSeconds;
   let timerInterval = null;
 
-  function applyTheme(themeName) {
+  const COLOR_KEY_TO_VAR = {
+    clockBg: '--theme-clock-bg',
+    plateColor: '--theme-plate-color',
+    fontColor: '--theme-font-color',
+    pluginBg: '--theme-plugin-bg',
+    accentColor: '--theme-accent-color'
+  };
+
+  function applyColorsToRoot(colors) {
+    if (!colors) return;
+    const targets = [
+      document.documentElement,
+      document.body,
+      document.getElementById('kronos-dock-bar'),
+      document.querySelector('.panel-root')
+    ].filter(Boolean);
+
+    Object.keys(COLOR_KEY_TO_VAR).forEach(key => {
+      const val = colors[key];
+      if (val) {
+        const varName = COLOR_KEY_TO_VAR[key];
+        targets.forEach(target => {
+          target.style.setProperty(varName, val);
+        });
+      }
+    });
+  }
+
+  function applyTheme(themeName, customColors) {
     const theme = themeName || (window.KronosStorage ? window.KronosStorage.getTheme() : (config.theme || 'charcoal'));
+    config.theme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
     document.body.setAttribute('data-theme', theme);
     const dockBar = document.getElementById('kronos-dock-bar');
     if (dockBar) dockBar.setAttribute('data-theme', theme);
+
+    const colors = customColors || (window.KronosStorage ? window.KronosStorage.getThemeColors(theme) : null);
+    if (colors) {
+      applyColorsToRoot(colors);
+    }
   }
 
   // Listen for preference, theme, or session updates from floating window
@@ -39,8 +74,9 @@
     window.KronosStorage.onSync(function (payload) {
       if (payload) {
         config = window.KronosStorage.getPrefs();
-        if (payload.theme || config.theme) {
-          applyTheme(payload.theme || config.theme);
+        if (payload.theme || payload.themeId || payload.type === 'theme' || payload.type === 'theme_color' || payload.type === 'theme_reset' || payload.colors) {
+          const targetTheme = payload.themeId || payload.theme || config.theme;
+          applyTheme(targetTheme, payload.colors);
         }
         if (!isRunning) {
           setPhase(currentPhase);
@@ -50,6 +86,32 @@
       }
     });
   }
+
+  // Active Disk Polling Watcher: guarantees instant sync across CEP extensions
+  (function setupDiskWatcher() {
+    if (typeof window.require !== 'function') return;
+    try {
+      const fs = window.require('fs');
+      const prefsPath = "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos\\preferences.json";
+      let lastMtime = 0;
+      if (fs.existsSync(prefsPath)) {
+        lastMtime = fs.statSync(prefsPath).mtimeMs;
+      }
+      setInterval(function () {
+        try {
+          if (!fs.existsSync(prefsPath)) return;
+          const stat = fs.statSync(prefsPath);
+          if (stat.mtimeMs !== lastMtime) {
+            lastMtime = stat.mtimeMs;
+            if (window.KronosStorage) {
+              config = window.KronosStorage.getPrefs();
+              applyTheme(config.theme);
+            }
+          }
+        } catch (e) {}
+      }, 300);
+    } catch (e) {}
+  })();
 
   // --- 2. AUDIO SYNTHESIS ENGINE (Web Audio API) ---
   let audioCtx = null;

@@ -8,6 +8,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <script>
+    (function() {
+      try {
+        var theme = 'charcoal';
+        if (typeof window.require === 'function') {
+          var fs = window.require('fs');
+          var prefsPath = "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos\\preferences.json";
+          if (fs.existsSync(prefsPath)) {
+            var p = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
+            if (p && p.theme) theme = p.theme;
+          }
+        } else {
+          var raw = localStorage.getItem('kronos_config');
+          if (raw) {
+            var cfg = JSON.parse(raw);
+            if (cfg && cfg.theme) theme = cfg.theme;
+          }
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body class="dot-grid-bg">
   <div class="panel-root">

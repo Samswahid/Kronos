@@ -55,8 +55,36 @@
     'solar-ochre': 'Solar Ochre'
   };
 
+  const COLOR_KEY_TO_VAR = {
+    clockBg: '--theme-clock-bg',
+    plateColor: '--theme-plate-color',
+    fontColor: '--theme-font-color',
+    pluginBg: '--theme-plugin-bg',
+    accentColor: '--theme-accent-color'
+  };
+
+  function applyColorsToRoot(colors) {
+    if (!colors) return;
+    const targets = [
+      document.documentElement,
+      document.body,
+      document.querySelector('.vault-window-root')
+    ].filter(Boolean);
+
+    Object.keys(COLOR_KEY_TO_VAR).forEach(key => {
+      const val = colors[key];
+      if (val) {
+        const varName = COLOR_KEY_TO_VAR[key];
+        targets.forEach(target => {
+          target.style.setProperty(varName, val);
+        });
+      }
+    });
+  }
+
   function syncThemeUI(themeId) {
     const activeTheme = themeId || (window.KronosStorage ? window.KronosStorage.getTheme() : 'charcoal');
+    document.documentElement.setAttribute('data-theme', activeTheme);
     document.body.setAttribute('data-theme', activeTheme);
     const rootEl = document.querySelector('.vault-window-root');
     if (rootEl) rootEl.setAttribute('data-theme', activeTheme);
@@ -64,11 +92,31 @@
     const tag = document.getElementById('current-theme-name-tag');
     if (tag) tag.textContent = THEME_NAMES[activeTheme] || activeTheme;
 
+    // Apply active theme 5 colors to CSS custom properties
+    if (window.KronosStorage) {
+      const activeColors = window.KronosStorage.getThemeColors(activeTheme);
+      applyColorsToRoot(activeColors);
+    }
+
+    // Synchronize all cards, swatches, and active states
     document.querySelectorAll('.theme-card').forEach(card => {
-      if (card.dataset.themeId === activeTheme) {
+      const cardThemeId = card.dataset.themeId;
+      if (cardThemeId === activeTheme) {
         card.classList.add('active');
       } else {
         card.classList.remove('active');
+      }
+
+      if (window.KronosStorage && cardThemeId) {
+        const themeColors = window.KronosStorage.getThemeColors(cardThemeId);
+        card.querySelectorAll('.swatch').forEach(swatch => {
+          const key = swatch.dataset.colorKey;
+          if (key && themeColors[key]) {
+            swatch.style.background = themeColors[key];
+            const inp = swatch.querySelector('.swatch-color-picker');
+            if (inp) inp.value = themeColors[key];
+          }
+        });
       }
     });
   }
@@ -631,13 +679,115 @@
 
     // Theme Card Click Selection
     document.querySelectorAll('.theme-card').forEach(card => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        // Ignore clicks originated from swatches or reset buttons
+        if (e.target.closest('.swatch') || e.target.closest('.theme-reset-btn')) return;
         const themeId = card.dataset.themeId;
         if (!themeId) return;
         if (window.KronosStorage) {
           window.KronosStorage.setTheme(themeId);
         }
         syncThemeUI(themeId);
+      });
+    });
+
+    // Swatch Color Pickers (5 sections per theme)
+    document.querySelectorAll('.theme-card .swatch').forEach(swatch => {
+      const card = swatch.closest('.theme-card');
+      const themeId = swatch.dataset.themeId || (card ? card.dataset.themeId : null);
+      const colorKey = swatch.dataset.colorKey;
+      const input = swatch.querySelector('.swatch-color-picker');
+      if (!input || !themeId || !colorKey) return;
+
+      swatch.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      function commitColor(hex) {
+        swatch.style.background = hex;
+        if (window.KronosStorage) {
+          window.KronosStorage.setThemeColor(themeId, colorKey, hex);
+        }
+        const currentActiveTheme = window.KronosStorage ? window.KronosStorage.getTheme() : 'charcoal';
+        if (themeId === currentActiveTheme) {
+          syncThemeUI(themeId);
+        }
+      }
+
+      // Live spectrum drag + immediate commit to disk and sync bus
+      input.addEventListener('input', (e) => {
+        e.stopPropagation();
+        commitColor(e.target.value);
+      });
+
+      // Committed change: save to KronosStorage and broadcast sync
+      input.addEventListener('change', (e) => {
+        e.stopPropagation();
+        commitColor(e.target.value);
+      });
+    });
+
+    // "Sync to Panel" Manual Triggers
+    function handleSyncToPanel(btnEl) {
+      if (!window.KronosStorage) return;
+      const currentActiveTheme = window.KronosStorage.getTheme();
+      const currentColors = window.KronosStorage.getThemeColors(currentActiveTheme);
+      window.KronosStorage.savePrefs(window.KronosStorage.getPrefs());
+      window.KronosStorage.broadcastSync("theme", { theme: currentActiveTheme, colors: currentColors });
+      window.KronosStorage.broadcastSync("theme_color", { themeId: currentActiveTheme, colors: currentColors });
+
+      if (btnEl) {
+        btnEl.classList.add('synced');
+        const span = btnEl.querySelector('span') || btnEl;
+        const prevText = span.textContent;
+        span.textContent = 'Synced ✓';
+        setTimeout(() => {
+          btnEl.classList.remove('synced');
+          span.textContent = prevText || 'Sync';
+        }, 1200);
+      }
+    }
+
+    const titleSyncBtn = document.getElementById('vault-sync-btn');
+    if (titleSyncBtn) {
+      titleSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleSyncToPanel(titleSyncBtn);
+      });
+    }
+
+    const themeSyncBtn = document.getElementById('btn-sync-theme-to-dock');
+    if (themeSyncBtn) {
+      themeSyncBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleSyncToPanel(themeSyncBtn);
+      });
+    }
+
+    // Theme Palette Reset Buttons
+    document.querySelectorAll('.theme-reset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const themeId = btn.dataset.themeId;
+        if (!themeId || !window.KronosStorage) return;
+        const resetColors = window.KronosStorage.resetThemeColors(themeId);
+
+        const card = btn.closest('.theme-card');
+        if (card) {
+          card.querySelectorAll('.swatch').forEach(swatch => {
+            const key = swatch.dataset.colorKey;
+            if (key && resetColors[key]) {
+              swatch.style.background = resetColors[key];
+              const inp = swatch.querySelector('.swatch-color-picker');
+              if (inp) inp.value = resetColors[key];
+            }
+          });
+        }
+
+        const currentActiveTheme = window.KronosStorage ? window.KronosStorage.getTheme() : 'charcoal';
+        if (themeId === currentActiveTheme) {
+          syncThemeUI(themeId);
+        }
       });
     });
 
@@ -655,8 +805,8 @@
     // Storage Sync from other windows
     if (window.KronosStorage && window.KronosStorage.onSync) {
       window.KronosStorage.onSync(function (payload) {
-        if (payload && (payload.theme || payload.type === 'theme')) {
-          syncThemeUI(payload.theme);
+        if (payload && (payload.theme || payload.themeId || payload.type === 'theme' || payload.type === 'theme_color' || payload.type === 'theme_reset')) {
+          syncThemeUI(payload.themeId || payload.theme);
         }
         if (window.KronosStorage) {
           sessions = window.KronosStorage.getSessions();

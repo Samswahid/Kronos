@@ -11,6 +11,58 @@
   const PREFS_FILE = KRONOS_DIR + "\\preferences.json";
   const SESSIONS_FILE = KRONOS_DIR + "\\sessions.json";
 
+  const THEME_DEFAULTS = {
+    'charcoal': {
+      clockBg: '#0d0d0f',
+      plateColor: '#232326',
+      fontColor: '#e2e2e5',
+      pluginBg: '#141414',
+      accentColor: '#d97706'
+    },
+    'neon-lilac': {
+      clockBg: '#100c24',
+      plateColor: '#2b2454',
+      fontColor: '#f0ebff',
+      pluginBg: '#120e24',
+      accentColor: '#9b8bf4'
+    },
+    'braun-1972': {
+      clockBg: '#201f1e',
+      plateColor: '#272625',
+      fontColor: '#f7f4ed',
+      pluginBg: '#ece6da',
+      accentColor: '#ea580c'
+    },
+    'cyber-violet': {
+      clockBg: '#08080b',
+      plateColor: '#161622',
+      fontColor: '#a89eff',
+      pluginBg: '#09090c',
+      accentColor: '#7969ef'
+    },
+    'kyoto-matcha': {
+      clockBg: '#18201c',
+      plateColor: '#2b4238',
+      fontColor: '#ede2cf',
+      pluginBg: '#1f2421',
+      accentColor: '#c29b62'
+    },
+    'cobalt-runner': {
+      clockBg: '#0e131a',
+      plateColor: '#1c7ed6',
+      fontColor: '#ffffff',
+      pluginBg: '#11161d',
+      accentColor: '#ff6b18'
+    },
+    'solar-ochre': {
+      clockBg: '#111114',
+      plateColor: '#f59f00',
+      fontColor: '#121212',
+      pluginBg: '#18181b',
+      accentColor: '#fa5252'
+    }
+  };
+
   const DEFAULT_CONFIG = {
     focusDurationMin: 25,
     shortBreakDurationMin: 5,
@@ -20,38 +72,11 @@
     chimeEnd: true,
     softTick: false,
     theme: 'charcoal',
+    themeCustomColors: {},
     storagePath: KRONOS_DIR
   };
 
-  const DEFAULT_SESSIONS = [
-    {
-      id: "sess-101",
-      date: "Oct 5, 2026",
-      startTime: "09:15 AM",
-      durationMin: 25,
-      phase: "focus",
-      title: "Hero Title 3D Rigging & Extrusion",
-      completed: true
-    },
-    {
-      id: "sess-102",
-      date: "Oct 5, 2026",
-      startTime: "09:45 AM",
-      durationMin: 25,
-      phase: "focus",
-      title: "Lower Thirds Keyframe Easing & Motion Blur",
-      completed: true
-    },
-    {
-      id: "sess-103",
-      date: "Oct 5, 2026",
-      startTime: "10:15 AM",
-      durationMin: 25,
-      phase: "focus",
-      title: "Color Grade Adjustment Layers & Grain Match",
-      completed: true
-    }
-  ];
+  const DEFAULT_SESSIONS = [];
 
   let fs = null;
   let path = null;
@@ -105,8 +130,49 @@
       const prefs = this.getPrefs();
       prefs.theme = themeName;
       this.savePrefs(prefs);
-      this.broadcastSync("theme", { theme: themeName });
+      this.broadcastSync("theme", { theme: themeName, colors: this.getThemeColors(themeName) });
       return themeName;
+    },
+
+    THEME_DEFAULTS: THEME_DEFAULTS,
+
+    getThemeColors: function (themeName) {
+      const themeId = themeName || this.getTheme();
+      const defaults = THEME_DEFAULTS[themeId] || THEME_DEFAULTS['charcoal'];
+      const prefs = this.getPrefs();
+      const customMap = prefs.themeCustomColors || {};
+      const custom = customMap[themeId] || {};
+      return Object.assign({}, defaults, custom);
+    },
+
+    setThemeColor: function (themeId, colorKey, hexColor) {
+      const prefs = this.getPrefs();
+      if (!prefs.themeCustomColors) prefs.themeCustomColors = {};
+      if (!prefs.themeCustomColors[themeId]) prefs.themeCustomColors[themeId] = {};
+      prefs.themeCustomColors[themeId][colorKey] = hexColor;
+      this.savePrefs(prefs);
+      const effective = this.getThemeColors(themeId);
+      this.broadcastSync("theme_color", { themeId: themeId, colorKey: colorKey, color: hexColor, colors: effective });
+      return effective;
+    },
+
+    resetThemeColors: function (themeId) {
+      const prefs = this.getPrefs();
+      if (prefs.themeCustomColors && prefs.themeCustomColors[themeId]) {
+        delete prefs.themeCustomColors[themeId];
+        this.savePrefs(prefs);
+      }
+      const resetColors = Object.assign({}, THEME_DEFAULTS[themeId] || THEME_DEFAULTS['charcoal']);
+      this.broadcastSync("theme_reset", { themeId: themeId, colors: resetColors });
+      return resetColors;
+    },
+
+    getAllThemeColors: function () {
+      const result = {};
+      Object.keys(THEME_DEFAULTS).forEach(id => {
+        result[id] = this.getThemeColors(id);
+      });
+      return result;
     },
 
     savePrefs: function (prefs) {
@@ -195,17 +261,49 @@
     },
 
     broadcastSync: function (type, data) {
+      const payload = Object.assign({ type: type, timestamp: Date.now() }, typeof data === 'object' ? data : {});
+      const jsonStr = JSON.stringify(payload);
+
+      // 1. BroadcastChannel (Instant sub-ms inter-window communication in modern Chromium/CEF)
       try {
-        if (window.__adobe_cep__) {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('kronos_sync_bus');
+          bc.postMessage(payload);
+          bc.close();
+        }
+      } catch (e) {}
+
+      // 2. Adobe CEP native CSEvent
+      try {
+        if (window.__adobe_cep__ && typeof CSEvent !== 'undefined') {
           const event = new CSEvent("com.neographs.kronos.sync", "APPLICATION");
-          const payload = Object.assign({ type: type, timestamp: Date.now() }, typeof data === 'object' ? data : {});
-          event.data = JSON.stringify(payload);
+          event.data = jsonStr;
           new CSInterface().dispatchEvent(event);
         }
+      } catch (e) {}
+
+      // 3. localStorage pulse
+      try {
+        localStorage.setItem('kronos_sync_pulse', jsonStr);
       } catch (e) {}
     },
 
     onSync: function (callback) {
+      if (typeof callback !== 'function') return;
+
+      // 1. BroadcastChannel Listener
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('kronos_sync_bus');
+          bc.onmessage = function (event) {
+            if (event && event.data) {
+              callback(event.data);
+            }
+          };
+        }
+      } catch (e) {}
+
+      // 2. Adobe CEP Native Listener
       try {
         if (window.__adobe_cep__) {
           new CSInterface().addEventListener("com.neographs.kronos.sync", function (event) {
@@ -218,8 +316,14 @@
           });
         }
       } catch (e) {}
+
+      // 3. localStorage Storage Listener
       window.addEventListener('storage', function (e) {
-        if (e.key === 'kronos_sessions' || e.key === 'kronos_config') {
+        if (e.key === 'kronos_sync_pulse' && e.newValue) {
+          try {
+            callback(JSON.parse(e.newValue));
+          } catch(err) {}
+        } else if (e.key === 'kronos_sessions' || e.key === 'kronos_config') {
           try {
             const parsed = JSON.parse(e.newValue);
             callback(Object.assign({ type: e.key === 'kronos_config' ? 'prefs' : 'sessions' }, parsed));

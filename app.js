@@ -16,6 +16,7 @@
     chimeEnd: true,
     softTick: false,
     theme: 'charcoal',
+    themeCustomColors: {},
     storagePath: "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos"
   };
 
@@ -29,7 +30,94 @@
     'solar-ochre': 'Solar Ochre'
   };
 
+  const THEME_DEFAULTS = {
+    'charcoal': {
+      clockBg: '#0d0d0f',
+      plateColor: '#232326',
+      fontColor: '#e2e2e5',
+      pluginBg: '#141414',
+      accentColor: '#d97706'
+    },
+    'neon-lilac': {
+      clockBg: '#100c24',
+      plateColor: '#2b2454',
+      fontColor: '#f0ebff',
+      pluginBg: '#120e24',
+      accentColor: '#9b8bf4'
+    },
+    'braun-1972': {
+      clockBg: '#201f1e',
+      plateColor: '#272625',
+      fontColor: '#f7f4ed',
+      pluginBg: '#ece6da',
+      accentColor: '#ea580c'
+    },
+    'cyber-violet': {
+      clockBg: '#08080b',
+      plateColor: '#161622',
+      fontColor: '#a89eff',
+      pluginBg: '#09090c',
+      accentColor: '#7969ef'
+    },
+    'kyoto-matcha': {
+      clockBg: '#18201c',
+      plateColor: '#2b4238',
+      fontColor: '#ede2cf',
+      pluginBg: '#1f2421',
+      accentColor: '#c29b62'
+    },
+    'cobalt-runner': {
+      clockBg: '#0e131a',
+      plateColor: '#1c7ed6',
+      fontColor: '#ffffff',
+      pluginBg: '#11161d',
+      accentColor: '#ff6b18'
+    },
+    'solar-ochre': {
+      clockBg: '#111114',
+      plateColor: '#f59f00',
+      fontColor: '#121212',
+      pluginBg: '#18181b',
+      accentColor: '#fa5252'
+    }
+  };
+
+  const COLOR_KEY_TO_VAR = {
+    clockBg: '--theme-clock-bg',
+    plateColor: '--theme-plate-color',
+    fontColor: '--theme-font-color',
+    pluginBg: '--theme-plugin-bg',
+    accentColor: '--theme-accent-color'
+  };
+
   let config = Object.assign({}, DEFAULT_CONFIG);
+
+  function getThemeColors(themeName) {
+    const themeId = themeName || config.theme || 'charcoal';
+    const defaults = THEME_DEFAULTS[themeId] || THEME_DEFAULTS['charcoal'];
+    const customMap = config.themeCustomColors || {};
+    const custom = customMap[themeId] || {};
+    return Object.assign({}, defaults, custom);
+  }
+
+  function applyColorsToRoot(colors) {
+    if (!colors) return;
+    const targets = [
+      document.documentElement,
+      document.body,
+      document.getElementById('kronos-dock-bar'),
+      document.getElementById('floating-vault-modal')
+    ].filter(Boolean);
+    Object.keys(COLOR_KEY_TO_VAR).forEach(key => {
+      const val = colors[key];
+      if (val) {
+        const varName = COLOR_KEY_TO_VAR[key];
+        targets.forEach(target => {
+          target.style.setProperty(varName, val);
+        });
+      }
+    });
+  }
 
   // Phases: 'focus' | 'short_break' | 'long_break'
   let currentPhase = 'focus';
@@ -39,7 +127,7 @@
   let remainingSeconds = totalSeconds;
   let timerInterval = null;
 
-  function applyTheme(themeId) {
+  function applyTheme(themeId, customColors) {
     const activeTheme = themeId || config.theme || 'charcoal';
     config.theme = activeTheme;
     document.body.setAttribute('data-theme', activeTheme);
@@ -56,11 +144,27 @@
     const tag = document.getElementById('current-theme-name-tag');
     if (tag) tag.textContent = THEME_NAMES[activeTheme] || activeTheme;
 
+    const colors = customColors || getThemeColors(activeTheme);
+    applyColorsToRoot(colors);
+
     document.querySelectorAll('.theme-card').forEach(card => {
-      if (card.dataset.themeId === activeTheme) {
+      const cardThemeId = card.dataset.themeId;
+      if (cardThemeId === activeTheme) {
         card.classList.add('active');
       } else {
         card.classList.remove('active');
+      }
+
+      if (cardThemeId) {
+        const tColors = getThemeColors(cardThemeId);
+        card.querySelectorAll('.swatch').forEach(swatch => {
+          const key = swatch.dataset.colorKey;
+          if (key && tColors[key]) {
+            swatch.style.background = tColors[key];
+            const inp = swatch.querySelector('.swatch-color-picker');
+            if (inp) inp.value = tColors[key];
+          }
+        });
       }
     });
 
@@ -1138,12 +1242,80 @@
 
     // Theme Card Click Selection
     document.querySelectorAll('.theme-card').forEach(card => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.swatch') || e.target.closest('.theme-reset-btn')) return;
         playMechanicalClick('press');
         const themeId = card.dataset.themeId;
         if (!themeId) return;
         applyTheme(themeId);
-        showToast("Theme: " + (THEME_NAMES[themeId] || themeId));
+      });
+    });
+
+    // Swatch Color Pickers (5 sections per theme)
+    document.querySelectorAll('.theme-card .swatch').forEach(swatch => {
+      const card = swatch.closest('.theme-card');
+      const themeId = swatch.dataset.themeId || (card ? card.dataset.themeId : null);
+      const colorKey = swatch.dataset.colorKey;
+      const input = swatch.querySelector('.swatch-color-picker');
+      if (!input || !themeId || !colorKey) return;
+
+      swatch.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      // Live spectrum drag
+      input.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const hex = e.target.value;
+        swatch.style.background = hex;
+        if (themeId === config.theme && COLOR_KEY_TO_VAR[colorKey]) {
+          document.documentElement.style.setProperty(COLOR_KEY_TO_VAR[colorKey], hex);
+        }
+      });
+
+      // Committed change: save to persistent config
+      input.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const hex = e.target.value;
+        if (!config.themeCustomColors) config.themeCustomColors = {};
+        if (!config.themeCustomColors[themeId]) config.themeCustomColors[themeId] = {};
+        config.themeCustomColors[themeId][colorKey] = hex;
+        try {
+          localStorage.setItem('kronos_config', JSON.stringify(config));
+        } catch (err) {}
+        if (themeId === config.theme) {
+          applyTheme(themeId);
+        }
+      });
+    });
+
+    // Theme Palette Reset Buttons
+    document.querySelectorAll('.theme-reset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const themeId = btn.dataset.themeId;
+        if (!themeId) return;
+        if (config.themeCustomColors && config.themeCustomColors[themeId]) {
+          delete config.themeCustomColors[themeId];
+          try {
+            localStorage.setItem('kronos_config', JSON.stringify(config));
+          } catch (err) {}
+        }
+        const resetColors = THEME_DEFAULTS[themeId] || THEME_DEFAULTS['charcoal'];
+        const card = btn.closest('.theme-card');
+        if (card) {
+          card.querySelectorAll('.swatch').forEach(swatch => {
+            const key = swatch.dataset.colorKey;
+            if (key && resetColors[key]) {
+              swatch.style.background = resetColors[key];
+              const inp = swatch.querySelector('.swatch-color-picker');
+              if (inp) inp.value = resetColors[key];
+            }
+          });
+        }
+        if (themeId === config.theme) {
+          applyTheme(themeId);
+        }
       });
     });
 
