@@ -201,6 +201,8 @@ html, body {
 
 /* Inset Lap Section */
 .lap-segment-channel {
+  position: relative !important;
+  top: 3.5px !important;
   background: var(--theme-clock-bg, #201f1e) !important;
   border: none !important;
   border-radius: 3.5px !important;
@@ -621,6 +623,8 @@ html, body {
 
 /* MICRO ACTIONS: Recessed container with NO border, Keycaps with NO border, Ample Bottom Clearance */
 .micro-actions {
+  position: relative !important;
+  top: -0.5px !important;
   display: flex !important;
   gap: 3.5px !important;
   align-items: center !important;
