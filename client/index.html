@@ -128,17 +128,19 @@
             <circle id="kronos-progress-arc" class="ring-arc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="113.1" />
           </svg>
 
-          <!-- Axial Plunger Cylinder Push-Switch -->
-          <button id="kronos-toggle-btn" class="axial-plunger-btn play-pause-trigger" aria-label="Start or Pause Timer" title="Start or Pause Timer">
-            <div class="plunger-dish">
-              <span class="btn-face">
-                <span class="plunger-pip glyph-play"></span>
-                <span class="plunger-bars glyph-pause" style="display: none;">
-                  <span class="p-bar"></span>
-                  <span class="p-bar"></span>
-                </span>
-              </span>
-            </div>
+          <!-- Tactile Push-Button Trigger -->
+          <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer" title="Start or Pause Timer">
+            <span class="btn-face">
+              <!-- Play Icon (shown when playing) — soft-cornered, optically centred (centroid on 12,12) -->
+              <svg class="icon-glyph glyph-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" style="display: none;">
+                <polygon points="8.75 6.5 18.25 12 8.75 17.5"></polygon>
+              </svg>
+              <!-- Pause Icon (shown when not playing) — symmetric pill bars centred on x=12 -->
+              <svg class="icon-glyph glyph-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="7" y="5.5" width="3.5" height="13" rx="1.75"></rect>
+                <rect x="13.5" y="5.5" width="3.5" height="13" rx="1.75"></rect>
+              </svg>
+            </span>
           </button>
         </div>
 
