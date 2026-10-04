@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kronos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dot-grid-bg">
+  <div class="panel-root">
+    
+    <!-- KRONOS DOCKABLE BAR (76-80px Height) -->
+    <div id="kronos-dock-bar" class="kronos-bar dot-grid-bg" role="region" aria-label="Kronos Focus Bar">
+      
+      <!-- ZONE A: Tactile Rotary Crown & Minimalist Lap Channel -->
+      <div class="kronos-zone zone-left">
+        <!-- Custom Machined Rotary Crown (Settings Launcher) -->
+        <button id="kronos-crown-btn" class="tactile-crown-trigger" aria-label="Open Session Vault">
+          <div class="crown-chassis">
+            <div class="crown-rim">
+              <div class="knurl-rib k1"></div>
+              <div class="knurl-rib k2"></div>
+              <div class="knurl-rib k3"></div>
+              <div class="knurl-rib k4"></div>
+              <div class="knurl-rib k5"></div>
+              <div class="knurl-rib k6"></div>
+            </div>
+            <div class="crown-core">
+              <span class="crown-amber-eye"></span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Industrial Segmented Lap Indicator -->
+        <div class="lap-segment-channel" aria-label="Pomodoro cycle progress">
+          <div class="lap-pips-row">
+            <span class="lap-pip active" data-lap="1"></span>
+            <span class="lap-pip" data-lap="2"></span>
+            <span class="lap-pip" data-lap="3"></span>
+            <span class="lap-pip" data-lap="4"></span>
+          </div>
+          <span class="lap-counter-label" id="dock-lap-label">LAP 1/4</span>
+        </div>
+      </div>
+
+      <!-- ZONE B: Integrated 3-Way Mode Switcher & Split-Flap Chronometer -->
+      <div class="kronos-zone zone-center">
+        <!-- 3-Way Mode Switcher -->
+        <div class="mode-selector-strip" id="mode-selector-strip">
+          <button class="mode-tab-btn active" data-mode="focus">FOCUS</button>
+          <button class="mode-tab-btn" data-mode="short_break">SHORT</button>
+          <button class="mode-tab-btn" data-mode="long_break">LONG</button>
+        </div>
+
+        <!-- Mechanical Split-Flap Clock Display -->
+        <div class="split-flap-display" id="split-flap-chronometer">
+          <!-- Minutes Tens -->
+          <div class="flap-tile-group">
+            <div class="flap-tile" id="tile-m1">
+              <div class="flap-hinge hinge-l"></div>
+              <div class="flap-hinge hinge-r"></div>
+              <div class="flap-card flap-top"><span class="digit-glyph">2</span></div>
+              <div class="flap-card flap-bottom"><span class="digit-glyph">2</span></div>
+              <div class="flap-seam"></div>
+            </div>
+            <!-- Minutes Units -->
+            <div class="flap-tile" id="tile-m2">
+              <div class="flap-hinge hinge-l"></div>
+              <div class="flap-hinge hinge-r"></div>
+              <div class="flap-card flap-top"><span class="digit-glyph">5</span></div>
+              <div class="flap-card flap-bottom"><span class="digit-glyph">5</span></div>
+              <div class="flap-seam"></div>
+            </div>
+          </div>
+
+          <!-- Flap Colon Divider -->
+          <div class="flap-colon">
+            <span class="colon-dot"></span>
+            <span class="colon-dot"></span>
+          </div>
+
+          <!-- Seconds Tens -->
+          <div class="flap-tile-group">
+            <div class="flap-tile" id="tile-s1">
+              <div class="flap-hinge hinge-l"></div>
+              <div class="flap-hinge hinge-r"></div>
+              <div class="flap-card flap-top"><span class="digit-glyph">0</span></div>
+              <div class="flap-card flap-bottom"><span class="digit-glyph">0</span></div>
+              <div class="flap-seam"></div>
+            </div>
+            <!-- Seconds Units -->
+            <div class="flap-tile" id="tile-s2">
+              <div class="flap-hinge hinge-l"></div>
+              <div class="flap-hinge hinge-r"></div>
+              <div class="flap-card flap-top"><span class="digit-glyph">0</span></div>
+              <div class="flap-card flap-bottom"><span class="digit-glyph">0</span></div>
+              <div class="flap-seam"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZONE C: Tactile Ring Gauge & Play/Skip Controls -->
+      <div class="kronos-zone zone-right">
+        <!-- Circular Gauge & Concave Play/Pause Button -->
+        <div class="gauge-button-capsule">
+          <svg class="progress-ring-svg" width="54" height="54" viewBox="0 0 54 54">
+            <circle class="ring-track" cx="27" cy="27" r="22" />
+            <circle id="kronos-progress-arc" class="ring-arc" cx="27" cy="27" r="22" />
+          </svg>
+
+          <!-- Tactile Concave Push-Button Trigger -->
+          <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer">
+            <span class="btn-face">
+              <svg class="icon-glyph glyph-play" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="8 5 19 12 8 19"></polygon>
+              </svg>
+              <svg class="icon-glyph glyph-pause" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+                <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Tactical Micro Lap / Skip Buttons -->
+        <div class="micro-actions">
+          <button id="kronos-skip-btn" class="micro-icon-btn" aria-label="Complete or Skip Lap">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+          </button>
+          <button id="kronos-reset-btn" class="micro-icon-btn" aria-label="Reset Timer">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="kronos-toast" class="toast-bubble" aria-live="polite"></div>
+
+  <script src="js/CSInterface.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

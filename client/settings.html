@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kronos Vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dot-grid-bg">
+  <div class="vault-window-root dot-grid-bg">
+    <!-- Window Title Bar -->
+    <div class="vault-titlebar">
+      <div class="vault-branding">
+        <div class="vault-rotary-mini">
+          <span class="rotary-mini-amber"></span>
+        </div>
+        <span class="vault-logo">KRONOS</span>
+        <span class="vault-version-tag">VAULT</span>
+      </div>
+
+      <div class="vault-stats-chip" id="today-stats-chip" aria-label="Focus time accumulated today">
+        <span class="stats-chip-dot"></span>
+        <span id="header-focus-time">1h 15m</span>
+      </div>
+
+      <div class="vault-window-controls">
+        <button id="vault-close-btn" class="vault-ctrl-btn close" aria-label="Close Window">✕</button>
+      </div>
+    </div>
+
+    <!-- Navigation Segment Switcher -->
+    <nav class="vault-nav-strip">
+      <button class="vault-tab-btn active" data-tab="tab-sessions">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+        Sessions
+        <span class="tab-count-badge" id="session-count-badge">3</span>
+      </button>
+      <button class="vault-tab-btn" data-tab="tab-themes">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+        Themes
+      </button>
+      <button class="vault-tab-btn" data-tab="tab-analytics">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Metrics
+      </button>
+      <button class="vault-tab-btn" data-tab="tab-preferences">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </nav>
+
+    <!-- TAB: THEMES & WATCH SKINS -->
+    <div class="vault-tab-content" id="tab-themes">
+      <div class="themes-header-strip">
+        <div>
+          <span class="section-title">WATCH SKINS &amp; COLOR SCHEMES</span>
+          <p class="section-desc">Tactile horological designs inspired by industrial and modern classics.</p>
+        </div>
+        <span class="themes-count-tag" id="current-theme-name-tag">Charcoal Flap</span>
+      </div>
+
+      <div class="theme-cards-grid" id="theme-cards-grid">
+        <!-- 1. Charcoal Flap (Baseline) -->
+        <div class="theme-card active" data-theme-id="charcoal">
+          <div class="theme-card-preview theme-pv-charcoal">
+            <div class="pv-bar">
+              <span class="pv-crown amber"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring amber"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Charcoal Flap</span>
+              <span class="theme-badge">BASELINE</span>
+            </div>
+            <span class="theme-desc">Material Charcoal dot-grid • Industrial amber</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #141414;"></span>
+              <span class="swatch" style="background: #232326;"></span>
+              <span class="swatch" style="background: #d97706;"></span>
+              <span class="swatch" style="background: #e2e2e5;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 2. Neon Lilac (Priority 1 Purple) -->
+        <div class="theme-card" data-theme-id="neon-lilac">
+          <div class="theme-card-preview theme-pv-lilac">
+            <div class="pv-bar">
+              <span class="pv-crown lilac"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring lilac"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Neon Lilac</span>
+              <span class="theme-badge p1">P1</span>
+            </div>
+            <span class="theme-desc">Spotify RAP-200A • Soft Lilac &amp; Deep Amethyst</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #120e24;"></span>
+              <span class="swatch" style="background: #2b2454;"></span>
+              <span class="swatch" style="background: #9b8bf4;"></span>
+              <span class="swatch" style="background: #f0ebff;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 3. Braun 1972 (Priority 2 Cream) -->
+        <div class="theme-card" data-theme-id="braun-1972">
+          <div class="theme-card-preview theme-pv-braun">
+            <div class="pv-bar">
+              <span class="pv-crown braun"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring braun"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Braun 1972</span>
+              <span class="theme-badge p2">P2</span>
+            </div>
+            <span class="theme-desc">Dieter Rams Ivory • Slate Black &amp; Safety Orange</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #ece6da;"></span>
+              <span class="swatch" style="background: #272625;"></span>
+              <span class="swatch" style="background: #ea580c;"></span>
+              <span class="swatch" style="background: #f7f4ed;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 4. Cyber Violet (Priority 3 Purple) -->
+        <div class="theme-card" data-theme-id="cyber-violet">
+          <div class="theme-card-preview theme-pv-cyber">
+            <div class="pv-bar">
+              <span class="pv-crown cyber"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring cyber"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Cyber Violet</span>
+              <span class="theme-badge p3">P3</span>
+            </div>
+            <span class="theme-desc">Obsidian Pitch Black • Electric Neon Violet Glow</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #09090c;"></span>
+              <span class="swatch" style="background: #161622;"></span>
+              <span class="swatch" style="background: #7969ef;"></span>
+              <span class="swatch" style="background: #a89eff;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 5. Kyoto Matcha -->
+        <div class="theme-card" data-theme-id="kyoto-matcha">
+          <div class="theme-card-preview theme-pv-matcha">
+            <div class="pv-bar">
+              <span class="pv-crown matcha"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring matcha"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Kyoto Matcha</span>
+              <span class="theme-badge">VINTAGE</span>
+            </div>
+            <span class="theme-desc">Matcha Latte Vending • Washi Cream &amp; Brass</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #1f2421;"></span>
+              <span class="swatch" style="background: #2b4238;"></span>
+              <span class="swatch" style="background: #c29b62;"></span>
+              <span class="swatch" style="background: #ede2cf;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 6. Cobalt Runner -->
+        <div class="theme-card" data-theme-id="cobalt-runner">
+          <div class="theme-card-preview theme-pv-cobalt">
+            <div class="pv-bar">
+              <span class="pv-crown cobalt"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring cobalt"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Cobalt Runner</span>
+              <span class="theme-badge">ATHLETIC</span>
+            </div>
+            <span class="theme-desc">Electric Cobalt Blue • High-Vis Athletic Orange</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #11161d;"></span>
+              <span class="swatch" style="background: #1c7ed6;"></span>
+              <span class="swatch" style="background: #ff6b18;"></span>
+              <span class="swatch" style="background: #ffffff;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 7. Solar Ochre -->
+        <div class="theme-card" data-theme-id="solar-ochre">
+          <div class="theme-card-preview theme-pv-ochre">
+            <div class="pv-bar">
+              <span class="pv-crown ochre"></span>
+              <span class="pv-flap">25</span>
+              <span class="pv-ring ochre"></span>
+            </div>
+          </div>
+          <div class="theme-card-info">
+            <div class="theme-name-row">
+              <span class="theme-title">Solar Ochre</span>
+              <span class="theme-badge">BAUHAUS</span>
+            </div>
+            <span class="theme-desc">Bauhaus Canary Ochre • Deep Ink Black Digits</span>
+            <div class="theme-swatches">
+              <span class="swatch" style="background: #18181b;"></span>
+              <span class="swatch" style="background: #f59f00;"></span>
+              <span class="swatch" style="background: #fa5252;"></span>
+              <span class="swatch" style="background: #121212;"></span>
+            </div>
+          </div>
+          <div class="theme-card-radio">
+            <span class="radio-check">✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: SESSIONS LOG & EXPORT -->
+    <div class="vault-tab-content active" id="tab-sessions">
+      <!-- Quick Summary Bar -->
+      <div class="vault-session-hero">
+        <div class="hero-metric">
+          <span class="metric-val" id="metric-today-time">1h 15m</span>
+          <span class="metric-lbl">TODAY FOCUS</span>
+        </div>
+        <div class="hero-metric">
+          <span class="metric-val" id="metric-today-laps">3 Laps</span>
+          <span class="metric-lbl">SESSIONS</span>
+        </div>
+        <div class="hero-metric">
+          <span class="metric-val" id="metric-streak">4 Days</span>
+          <span class="metric-lbl">CURRENT STREAK</span>
+        </div>
+      </div>
+
+      <!-- Session List Controls -->
+      <div class="session-list-toolbar">
+        <span class="section-title">LOGGED SESSIONS</span>
+        <div class="toolbar-actions">
+          <button id="btn-quick-add-session" class="vault-btn-subtle" aria-label="Quick Add">+ Manual</button>
+          <button id="btn-clear-all" class="vault-btn-subtle" aria-label="Clear All">Clear</button>
+        </div>
+      </div>
+
+      <!-- Scrollable Session Cards Container -->
+      <div class="session-cards-scroll" id="session-cards-container"></div>
+
+      <!-- Export Bottom Bar -->
+      <div class="vault-footer-export">
+        <div class="export-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Time Export:</span>
+        </div>
+        <div class="export-btn-group">
+          <button id="btn-export-csv" class="vault-export-btn" aria-label="Export CSV">
+            CSV
+          </button>
+          <button id="btn-export-json" class="vault-export-btn" aria-label="Export JSON">
+            JSON
+          </button>
+          <button id="btn-copy-summary" class="vault-export-btn" aria-label="Copy Summary">
+            Copy Summary
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ANALYTICS & INSIGHTS (Dynamic Engine • Zero Mockups) -->
+    <div class="vault-tab-content" id="tab-analytics">
+      <div class="analytics-wrapper">
+        <div class="analytics-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-title" id="analytics-chart-title">WEEKLY FOCUS VELOCITY</span>
+              <span class="card-sub" id="analytics-chart-sub">Last 7 Days</span>
+            </div>
+            <div class="timeframe-group" id="analytics-timeframe-group">
+              <button class="tf-btn" data-tf="daily">Daily</button>
+              <button class="tf-btn active" data-tf="7d">7 Days</button>
+              <button class="tf-btn" data-tf="monthly">Monthly</button>
+            </div>
+          </div>
+          <!-- Dynamic Bar Chart (Filled Live from KronosStorage) -->
+          <div class="analytics-bar-chart" id="analytics-bar-chart"></div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-title">CATEGORY BREAKDOWN</span>
+              <span class="card-sub">Real Data by Session Title</span>
+            </div>
+          </div>
+          <!-- Dynamic Category Breakdown (Aggregated Live from KronosStorage) -->
+          <div class="category-breakdown-list" id="category-breakdown-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PREFERENCES & EXTENSION STORAGE -->
+    <div class="vault-tab-content" id="tab-preferences">
+      <div class="preferences-wrapper">
+        <div class="pref-group">
+          <div class="group-title">TIMER INTERVALS (MINUTES)</div>
+          
+          <div class="pref-row">
+            <label for="pref-focus-dur">Focus Duration</label>
+            <div class="stepper-input">
+              <button class="step-btn" data-step="pref-focus-dur" data-val="-1">－</button>
+              <input type="number" id="pref-focus-dur" value="25" min="1" max="120">
+              <button class="step-btn" data-step="pref-focus-dur" data-val="1">＋</button>
+            </div>
+          </div>
+
+          <div class="pref-row">
+            <label for="pref-short-break">Short Break Duration</label>
+            <div class="stepper-input">
+              <button class="step-btn" data-step="pref-short-break" data-val="-1">－</button>
+              <input type="number" id="pref-short-break" value="5" min="1" max="60">
+              <button class="step-btn" data-step="pref-short-break" data-val="1">＋</button>
+            </div>
+          </div>
+
+          <div class="pref-row">
+            <label for="pref-long-break">Long Break Duration</label>
+            <div class="stepper-input">
+              <button class="step-btn" data-step="pref-long-break" data-val="-1">－</button>
+              <input type="number" id="pref-long-break" value="15" min="1" max="90">
+              <button class="step-btn" data-step="pref-long-break" data-val="1">＋</button>
+            </div>
+          </div>
+
+          <div class="pref-row">
+            <label for="pref-laps-cycle">Laps per Long Cycle</label>
+            <div class="stepper-input">
+              <button class="step-btn" data-step="pref-laps-cycle" data-val="-1">－</button>
+              <input type="number" id="pref-laps-cycle" value="4" min="2" max="10">
+              <button class="step-btn" data-step="pref-laps-cycle" data-val="1">＋</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pref-group">
+          <div class="group-title">TACTILE AUDIO SYNTHESIS</div>
+          <div class="pref-row">
+            <label for="pref-sound-effects">Mechanical Switch Clicks</label>
+            <input type="checkbox" id="pref-sound-effects" checked class="pref-toggle">
+          </div>
+          <div class="pref-row">
+            <label for="pref-chime-end">Session Complete Chime</label>
+            <input type="checkbox" id="pref-chime-end" checked class="pref-toggle">
+          </div>
+          <div class="pref-row">
+            <label for="pref-soft-tick">Subtle Clock Ticking (During Focus)</label>
+            <input type="checkbox" id="pref-soft-tick" class="pref-toggle">
+          </div>
+        </div>
+
+        <div class="pref-group">
+          <div class="group-title">STORAGE &amp; LOCAL PREFERENCES PATH</div>
+          <div class="storage-info-box">
+            <div class="storage-path-header">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              <span>Live Extension Directory:</span>
+            </div>
+            <code class="storage-path-code">C:\Users\Admin\AppData\Local\NeoGraphs\Kronos</code>
+            <p class="storage-path-desc">
+              Sessions and custom settings are automatically synced to this local path for offline persistence across After Effects launches.
+            </p>
+          </div>
+        </div>
+
+        <div class="pref-save-row">
+          <button id="btn-save-prefs" class="vault-btn-primary">Apply Settings</button>
+          <span id="save-status-indicator" class="status-msg"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="kronos-toast" class="toast-bubble" aria-live="polite"></div>
+
+  <script src="js/CSInterface.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>

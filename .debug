@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionList>
+    <Extension Id="neographs.kronos.panel">
+        <HostList>
+            <Host Name="AEFT" Port="8095"/>
+        </HostList>
+    </Extension>
+    <Extension Id="neographs.kronos.settings">
+        <HostList>
+            <Host Name="AEFT" Port="8096"/>
+        </HostList>
+    </Extension>
+</ExtensionList>
