@@ -223,7 +223,7 @@
   const lapPips = document.querySelectorAll('.lap-pip');
   const dockLapLabel = document.getElementById('dock-lap-label');
 
-  const RING_CIRCUMFERENCE = 113.1;
+  const RING_CIRCUMFERENCE = 100.53; // 2πr, r=16 — keep in sync with .ring-arc in styles.css
   if (progressArc) {
     progressArc.style.strokeDasharray = `${RING_CIRCUMFERENCE}px`;
     progressArc.setAttribute('stroke-dasharray', `${RING_CIRCUMFERENCE}`);

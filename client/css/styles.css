@@ -118,7 +118,9 @@ html, body {
 .zone-right {
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  /* Stack height MUST stay 62px (gauge 38 + gap 8 + micro-actions 16) so the micro-actions
+     bottom stays flush with the bottom of the split-flap timer box. Change gap if gauge size changes. */
+  gap: 8px;
 }
 
 /* ZONE A: Modular Squircle Rotary & Inset Lap Channel */
@@ -495,15 +497,16 @@ html, body {
    Dark recessed surrounding socket channel + Dead-centered cylinder with no hover shift */
 .gauge-button-capsule {
   position: relative !important;
-  width: 44px !important;
-  height: 44px !important;
+  width: 38px !important;
+  height: 38px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: #111215 !important;
+  /* Same surface as the split-flap timer container — follows every theme */
+  background: var(--theme-clock-bg, var(--bg-panel, #111215)) !important;
   border-radius: 50% !important;
   /* Concentric only (zero x/y offsets) so nothing reads as tilted or lit from one side */
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), inset 0 0 6px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5) !important;
   border: none !important;
   box-sizing: border-box !important;
   margin: 0 !important;
@@ -522,24 +525,23 @@ html, body {
   margin: 0 !important;
 }
 
+/* Grey track removed from markup — only the progress arc is drawn */
 .ring-track {
-  fill: none !important;
-  stroke: rgba(255, 255, 255, 0.08) !important;
-  stroke-width: 2.5 !important;
+  display: none !important;
 }
 
 .ring-arc {
   fill: none !important;
   stroke: var(--theme-accent-color, #ea580c) !important;
-  stroke-width: 2.5 !important;
+  stroke-width: 2 !important;
   stroke-linecap: round !important;
-  stroke-dasharray: 113.1px !important; /* 2πr, r=18 — must match RING_CIRCUMFERENCE in app.js */
-  stroke-dashoffset: 113.1px;
+  stroke-dasharray: 100.53px !important; /* 2πr, r=16 — must match RING_CIRCUMFERENCE in app.js */
+  stroke-dashoffset: 100.53px;
   filter: drop-shadow(0 0 3px var(--theme-accent-color, #ea580c)) !important;
   transition: stroke-dashoffset 180ms linear, stroke 180ms ease, opacity 120ms ease !important;
 }
 
-/* Tactile Push-Button Trigger - centred with inset/margin:auto (even 26px in 44px capsule => 9px each side, no half-pixel blur) */
+/* Tactile Push-Button Trigger - centred with inset/margin:auto (26px in 38px capsule => 6px each side, no half-pixel blur) */
 .tactile-round-btn, .axial-plunger-btn {
   position: absolute !important;
   inset: 0 !important;
@@ -548,11 +550,11 @@ html, body {
   width: 26px !important;
   height: 26px !important;
   border-radius: 50% !important;
-  /* Domed face lit from dead centre — no directional highlight */
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 55%, rgba(0, 0, 0, 0.18) 100%), var(--theme-plate-color, #232326) !important;
+  /* Braun-style concave dish: rim catches light, centre sits recessed — all concentric, no direction */
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.06) 48%, rgba(255, 255, 255, 0.05) 82%, rgba(255, 255, 255, 0.09) 100%), var(--theme-plate-color, #232326) !important;
   border: none !important;
   outline: none !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 6px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
   cursor: pointer !important;
   padding: 0 !important;
   box-sizing: border-box !important;
@@ -564,9 +566,19 @@ html, body {
   transition: filter 120ms ease, box-shadow 120ms ease, transform 120ms ease !important;
 }
 
+/* Faint concentric inner groove (dish edge) */
+.tactile-round-btn::before, .axial-plunger-btn::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 3px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+  pointer-events: none !important;
+}
+
 .tactile-round-btn:hover, .axial-plunger-btn:hover {
   filter: brightness(1.15) !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 8px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 6px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.11) !important;
 }
 
 /* Press = uniform sink toward centre (scale only, no shift) */
@@ -578,7 +590,7 @@ html, body {
 
 /* Running: thin concentric accent halo */
 .tactile-round-btn.running, .axial-plunger-btn.running {
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), 0 0 6px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--theme-accent-color, #ea580c) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--theme-accent-color, #ea580c) !important;
 }
 
 .btn-face {
