@@ -7,7 +7,7 @@
     </Extension>
     <Extension Id="neographs.kronos.settings">
         <HostList>
-            <Host Name="AEFT" Port="8096"/>
+            <Host Name="AEFT" Port="8098"/>
         </HostList>
     </Extension>
 </ExtensionList>
