@@ -523,27 +523,27 @@
       if (profile === 'braun_thud') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(150, now);
-        gain.gain.setValueAtTime(0.03 * vMul, now);
+        gain.gain.setValueAtTime(0.08 * vMul, now);
         gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.016);
       } else if (profile === 'vintage_bell') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1760, now);
-        gain.gain.setValueAtTime(0.015 * vMul, now);
+        gain.gain.setValueAtTime(0.045 * vMul, now);
         gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.014);
       } else if (profile === 'digital_quartz') {
         osc.type = 'square';
         osc.frequency.setValueAtTime(2048, now);
-        gain.gain.setValueAtTime(0.012 * vMul, now);
+        gain.gain.setValueAtTime(0.036 * vMul, now);
         gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.008);
       } else if (profile === 'zen_gong') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(320, now);
-        gain.gain.setValueAtTime(0.02 * vMul, now);
+        gain.gain.setValueAtTime(0.06 * vMul, now);
         gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.02);
       } else {
         osc.type = 'square';
         osc.frequency.setValueAtTime(1100, now);
-        gain.gain.setValueAtTime(0.02 * vMul, now);
+        gain.gain.setValueAtTime(0.06 * vMul, now);
         gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.01);
       }
 

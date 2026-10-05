@@ -1217,13 +1217,6 @@
       });
     }
 
-    // Switch Click Volume Slider Preview
-    if (inputSwitchVolume) {
-      inputSwitchVolume.addEventListener('change', () => {
-        playMechanicalClick('press');
-      });
-    }
-
     // Esc Key closes window
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
