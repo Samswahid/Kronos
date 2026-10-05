@@ -245,8 +245,9 @@
         const col = document.createElement('div');
         col.className = 'chart-col';
         const pct = Math.max(slot.mins > 0 ? 8 : 2, Math.round((slot.mins / maxMins) * 100));
+        col.title = slot.mins > 0 ? `${slot.mins} mins` : '';
         col.innerHTML = `
-          <span class="chart-val">${slot.mins > 0 ? slot.mins + 'm' : ''}</span>
+          <span class="chart-val">${slot.mins > 0 ? slot.mins : ''}</span>
           <div class="chart-bar-wrap">
             <div class="chart-bar ${slot.mins > 0 ? 'active' : ''}" style="height: ${pct}%;"></div>
           </div>
@@ -286,8 +287,9 @@
         const col = document.createElement('div');
         col.className = 'chart-col' + (day.isToday ? ' current' : '');
         const pct = Math.max(day.mins > 0 ? 8 : 2, Math.round((day.mins / maxMins) * 100));
+        col.title = day.mins > 0 ? `${day.mins} mins` : '';
         col.innerHTML = `
-          <span class="chart-val">${day.mins > 0 ? day.mins + 'm' : ''}</span>
+          <span class="chart-val">${day.mins > 0 ? day.mins : ''}</span>
           <div class="chart-bar-wrap">
             <div class="chart-bar ${day.mins > 0 ? 'active' : ''} ${day.isToday ? 'current' : ''}" style="height: ${pct}%;"></div>
           </div>
@@ -321,9 +323,9 @@
         const col = document.createElement('div');
         col.className = 'chart-col' + (w.current ? ' current' : '');
         const pct = Math.max(w.mins > 0 ? 8 : 2, Math.round((w.mins / maxMins) * 100));
-        const valText = w.mins >= 60 ? `${(w.mins / 60).toFixed(1)}h` : (w.mins > 0 ? `${w.mins}m` : '');
+        col.title = w.mins > 0 ? `${w.mins} mins` : '';
         col.innerHTML = `
-          <span class="chart-val">${valText}</span>
+          <span class="chart-val">${w.mins > 0 ? w.mins : ''}</span>
           <div class="chart-bar-wrap">
             <div class="chart-bar ${w.mins > 0 ? 'active' : ''} ${w.current ? 'current' : ''}" style="height: ${pct}%;"></div>
           </div>

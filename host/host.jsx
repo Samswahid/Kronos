@@ -12,8 +12,27 @@
     },
 
     /**
+     * Retrieves the name of the currently open project in AE.
+     * If unsaved/untitled, returns "Untitled Project".
+     * Used by Kronos to auto-tag Pomodoro sessions with the active AE project name!
+     */
+    getProjectName: function () {
+      try {
+        if (app.project) {
+          if (app.project.file && app.project.file.name) {
+            var pName = decodeURI(app.project.file.name);
+            return pName.replace(/\.aep$/i, "");
+          }
+          return "Untitled Project";
+        }
+      } catch (e) {
+        // Fallback
+      }
+      return "Untitled Project";
+    },
+
+    /**
      * Retrieves the name of the currently active composition in AE, if any.
-     * Used by Kronos to auto-tag Pomodoro sessions with the active project comp!
      */
     getActiveCompName: function () {
       try {

@@ -396,30 +396,35 @@
     }
   }
 
-  function resetCurrentTimer() {
+  function resetCurrentTimer(e) {
     playMechanicalClick('release');
     pauseTimer();
     remainingSeconds = totalSeconds;
+    if (e && (e.ctrlKey || e.metaKey)) {
+      currentLap = 1;
+      renderLapPips();
+    }
     renderTimer(true);
   }
 
-  function getActiveAECompName(callback) {
+  function getAEProjectName(callback) {
     if (csInterface && csInterface.evalScript) {
-      csInterface.evalScript("$.global.kronos.getActiveCompName()", function (res) {
+      csInterface.evalScript("$.global.kronos.getProjectName()", function (res) {
         if (res && res !== 'undefined' && res !== 'null' && res.trim().length > 0) {
           callback(res.trim());
         } else {
-          callback("");
+          callback("Untitled Project");
         }
       });
     } else {
-      callback("");
+      callback("Untitled Project");
     }
   }
 
   function logCompletedSession(durationMin, phase, fallbackTitle) {
-    getActiveAECompName(function (compName) {
-      const title = compName ? `${compName} • Lap ${currentLap}` : fallbackTitle;
+    getAEProjectName(function (projectName) {
+      const proj = projectName || "Untitled Project";
+      const title = `${proj} • Lap ${currentLap}`;
       const now = new Date();
       const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
