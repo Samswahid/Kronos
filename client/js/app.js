@@ -24,10 +24,14 @@
   let currentLap = 1;
   let isRunning = false;
   let totalSeconds = config.focusDurationMin * 60;
+  let initialPhaseSeconds = totalSeconds;
   let remainingSeconds = totalSeconds;
+  let isOvertime = false;
+  let overtimeSeconds = 0;
   let timerInterval = null;
   let activeSessionTitle = null;
   let activeSessionTags = [];
+  let lastProcessedResumeId = 0;
 
   const COLOR_KEY_TO_VAR = {
     clockBg: '--theme-clock-bg',
@@ -73,6 +77,42 @@
 
   window.applyTheme = applyTheme;
 
+  function handleResume(payload) {
+    if (!payload) return;
+    pauseTimer();
+    isOvertime = false;
+    overtimeSeconds = 0;
+    const overflowBadge = document.getElementById('kronos-overflow-badge');
+    if (overflowBadge) overflowBadge.classList.remove('active');
+
+    currentPhase = payload.phase || 'focus';
+    let lap = 1;
+    if (payload.currentLap || payload.lap) {
+      lap = parseInt(payload.currentLap || payload.lap, 10);
+    } else if (payload.title || payload.activeSessionTitle) {
+      const m = (payload.title || payload.activeSessionTitle).match(/Lap\s*(\d+)/i);
+      if (m) lap = parseInt(m[1], 10);
+    }
+    currentLap = Math.min(5, Math.max(1, lap));
+
+    const dur = Math.min(240, Math.max(1, parseInt(payload.durationMin, 10) || config.focusDurationMin || 25));
+    totalSeconds = dur * 60;
+    initialPhaseSeconds = totalSeconds;
+    remainingSeconds = totalSeconds;
+    activeSessionTitle = payload.title || payload.activeSessionTitle || null;
+    activeSessionTags = Array.isArray(payload.tags || payload.activeSessionTags) ? (payload.tags || payload.activeSessionTags).slice() : [];
+
+    modeTabBtns.forEach(btn => {
+      if (btn.dataset.mode === currentPhase) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+
+    renderLapPips();
+    renderTimer(true);
+    startTimer();
+    persistActiveState();
+  }
+
   // Listen for preference, theme, or session updates from floating window
   if (window.KronosStorage && window.KronosStorage.onSync) {
     window.KronosStorage.onSync(function (payload) {
@@ -80,21 +120,7 @@
       config = window.KronosStorage.getPrefs();
 
       if (payload.type === 'resume_session') {
-        pauseTimer();
-        currentPhase = payload.phase || 'focus';
-        const dur = Math.min(90, Math.max(1, parseInt(payload.durationMin, 10) || config.focusDurationMin || 25));
-        totalSeconds = dur * 60;
-        remainingSeconds = totalSeconds;
-        activeSessionTitle = payload.title || null;
-        activeSessionTags = Array.isArray(payload.tags) ? payload.tags.slice() : [];
-        modeTabBtns.forEach(btn => {
-          if (btn.dataset.mode === currentPhase) btn.classList.add('active');
-          else btn.classList.remove('active');
-        });
-        renderLapPips();
-        renderTimer(true);
-        startTimer();
-        persistActiveState();
+        handleResume(payload);
       } else if (payload.type === 'audio_profile' || payload.profile) {
         if (config) config.audioProfile = payload.profile || config.audioProfile;
         playMechanicalClick('press');
@@ -117,23 +143,43 @@
     try {
       const fs = window.require('fs');
       const prefsPath = "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos\\preferences.json";
-      let lastMtime = 0;
+      const activeStatePath = "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos\\active_state.json";
+      let lastPrefsMtime = 0;
+      let lastActiveStateMtime = 0;
       if (fs.existsSync(prefsPath)) {
-        lastMtime = fs.statSync(prefsPath).mtimeMs;
+        lastPrefsMtime = fs.statSync(prefsPath).mtimeMs;
+      }
+      if (fs.existsSync(activeStatePath)) {
+        lastActiveStateMtime = fs.statSync(activeStatePath).mtimeMs;
       }
       setInterval(function () {
         try {
-          if (!fs.existsSync(prefsPath)) return;
-          const stat = fs.statSync(prefsPath);
-          if (stat.mtimeMs !== lastMtime) {
-            lastMtime = stat.mtimeMs;
-            if (window.KronosStorage) {
-              config = window.KronosStorage.getPrefs();
-              applyTheme(config.theme);
+          if (fs.existsSync(prefsPath)) {
+            const stat = fs.statSync(prefsPath);
+            if (stat.mtimeMs !== lastPrefsMtime) {
+              lastPrefsMtime = stat.mtimeMs;
+              if (window.KronosStorage) {
+                config = window.KronosStorage.getPrefs();
+                applyTheme(config.theme);
+              }
+            }
+          }
+          if (fs.existsSync(activeStatePath)) {
+            const aStat = fs.statSync(activeStatePath);
+            if (aStat.mtimeMs !== lastActiveStateMtime) {
+              lastActiveStateMtime = aStat.mtimeMs;
+              const aRaw = fs.readFileSync(activeStatePath, 'utf8');
+              if (aRaw) {
+                const aState = JSON.parse(aRaw);
+                if (aState && aState.resumeTriggerId && aState.resumeTriggerId !== lastProcessedResumeId) {
+                  lastProcessedResumeId = aState.resumeTriggerId;
+                  handleResume(aState);
+                }
+              }
             }
           }
         } catch (e) { }
-      }, 300);
+      }, 200);
     } catch (e) { }
   })();
 
@@ -529,8 +575,8 @@
   }
 
   function renderTimer(skipAnim = false) {
-    const minutes = Math.floor(remainingSeconds / 60);
-    const seconds = remainingSeconds % 60;
+    const minutes = isOvertime ? Math.floor(overtimeSeconds / 60) : Math.floor(remainingSeconds / 60);
+    const seconds = isOvertime ? (overtimeSeconds % 60) : (remainingSeconds % 60);
 
     const mStr = String(minutes).padStart(2, '0');
     const sStr = String(seconds).padStart(2, '0');
@@ -540,14 +586,25 @@
     updateTile(tileS1, sStr[0], 's1', skipAnim);
     updateTile(tileS2, sStr[1], 's2', skipAnim);
 
-    const fraction = totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0;
-    const offset = (RING_CIRCUMFERENCE * (1 - fraction)).toFixed(2);
+    const overflowBadge = document.getElementById('kronos-overflow-badge');
+    if (overflowBadge) {
+      if (isOvertime) {
+        overflowBadge.classList.add('active');
+      } else {
+        overflowBadge.classList.remove('active');
+      }
+    }
+
+    const fraction = isOvertime ? 1 : (totalSeconds > 0 ? (totalSeconds - remainingSeconds) / totalSeconds : 0);
+    const offset = isOvertime ? '0.00' : (RING_CIRCUMFERENCE * (1 - fraction)).toFixed(2);
     if (progressArc) {
       progressArc.style.setProperty('stroke-dashoffset', `${offset}px`, 'important');
       progressArc.setAttribute('stroke-dashoffset', `${offset}`);
-      progressArc.style.opacity = fraction > 0.001 ? '1' : '0';
+      progressArc.style.opacity = (isOvertime || fraction > 0.001) ? '1' : '0';
 
-      if (currentPhase === 'focus') {
+      if (isOvertime) {
+        progressArc.style.setProperty('stroke', 'var(--theme-accent-color, #ea580c)', 'important');
+      } else if (currentPhase === 'focus') {
         progressArc.style.setProperty('stroke', 'var(--theme-accent-color, #ea580c)', 'important');
       } else if (currentPhase === 'short_break') {
         progressArc.style.setProperty('stroke', 'var(--theme-font-color, #ffffff)', 'important');
@@ -566,6 +623,12 @@
     } else if (phase === 'long_break') {
       totalSeconds = config.longBreakDurationMin * 60;
     }
+
+    initialPhaseSeconds = totalSeconds;
+    isOvertime = false;
+    overtimeSeconds = 0;
+    const overflowBadge = document.getElementById('kronos-overflow-badge');
+    if (overflowBadge) overflowBadge.classList.remove('active');
 
     modeTabBtns.forEach(btn => {
       if (btn.dataset.mode === phase) {
@@ -620,6 +683,9 @@
       window.KronosStorage.saveActiveState({
         remainingSeconds: remainingSeconds,
         totalSeconds: totalSeconds,
+        initialPhaseSeconds: initialPhaseSeconds,
+        isOvertime: isOvertime,
+        overtimeSeconds: overtimeSeconds,
         currentPhase: currentPhase,
         currentLap: currentLap,
         isRunning: isRunning,
@@ -636,10 +702,13 @@
       const saved = window.KronosStorage.getActiveState();
       if (!saved) return false;
 
-      if (typeof saved.remainingSeconds === 'number' && saved.remainingSeconds > 0) {
+      if ((typeof saved.remainingSeconds === 'number' && saved.remainingSeconds > 0) || saved.isOvertime) {
         currentPhase = saved.currentPhase || 'focus';
         currentLap = Math.min(5, Math.max(1, saved.currentLap || 1));
         totalSeconds = saved.totalSeconds || (config.focusDurationMin * 60);
+        initialPhaseSeconds = saved.initialPhaseSeconds || totalSeconds;
+        isOvertime = !!saved.isOvertime;
+        overtimeSeconds = saved.overtimeSeconds || 0;
         remainingSeconds = Math.min(totalSeconds, Math.max(0, saved.remainingSeconds));
         activeSessionTitle = saved.activeSessionTitle || null;
         activeSessionTags = Array.isArray(saved.activeSessionTags) ? saved.activeSessionTags : [];
@@ -675,13 +744,26 @@
     persistActiveState();
 
     timerInterval = setInterval(() => {
-      if (remainingSeconds > 0) {
-        remainingSeconds--;
+      if (!isOvertime) {
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
+          renderTimer();
+          playTickSound();
+          persistActiveState();
+        } else {
+          // Reached 00:00 -> Enter Overtime Flow-State Tracker seamlessly!
+          playAcousticChime();
+          isOvertime = true;
+          overtimeSeconds = 0;
+          renderTimer();
+          persistActiveState();
+        }
+      } else {
+        // Counting UP in elapsed overtime
+        overtimeSeconds++;
         renderTimer();
         playTickSound();
         persistActiveState();
-      } else {
-        completeInterval();
       }
     }, 1000);
   }
@@ -703,6 +785,8 @@
   function resetCurrentTimer(e) {
     playMechanicalClick('release');
     pauseTimer();
+    isOvertime = false;
+    overtimeSeconds = 0;
     remainingSeconds = totalSeconds;
     if (e && (e.ctrlKey || e.metaKey)) {
       currentLap = 1;
@@ -780,9 +864,16 @@
     pauseTimer();
     playAcousticChime();
 
+    const baseDurationMin = Math.round(initialPhaseSeconds / 60) || config.focusDurationMin;
+    const overtimeMin = isOvertime ? Math.round(overtimeSeconds / 60) : 0;
+    const durationToLog = baseDurationMin + overtimeMin;
+
+    isOvertime = false;
+    overtimeSeconds = 0;
+
     if (currentPhase === 'focus') {
       const finishedLap = currentLap;
-      logCompletedSession(config.focusDurationMin, 'focus', finishedLap);
+      logCompletedSession(durationToLog, 'focus', finishedLap);
 
       const totalLaps = parseInt(config.lapsPerCycle, 10) || 4;
       if (currentLap >= totalLaps) {
@@ -793,6 +884,7 @@
 
       currentPhase = 'focus';
       totalSeconds = config.focusDurationMin * 60;
+      initialPhaseSeconds = totalSeconds;
       remainingSeconds = totalSeconds;
       renderLapPips();
       renderTimer(true);
@@ -800,6 +892,7 @@
     } else {
       currentPhase = 'focus';
       totalSeconds = config.focusDurationMin * 60;
+      initialPhaseSeconds = totalSeconds;
       remainingSeconds = totalSeconds;
       modeTabBtns.forEach(btn => {
         if (btn.dataset.mode === 'focus') btn.classList.add('active');
@@ -816,9 +909,16 @@
     pauseTimer();
 
     if (currentPhase === 'focus') {
-      const elapsed = Math.max(1, Math.round((totalSeconds - remainingSeconds) / 60));
+      const baseElapsed = isOvertime
+        ? Math.round(initialPhaseSeconds / 60)
+        : Math.max(1, Math.round((totalSeconds - remainingSeconds) / 60));
+      const overtimeMin = isOvertime ? Math.round(overtimeSeconds / 60) : 0;
+      const elapsed = baseElapsed + overtimeMin;
       const finishedLap = currentLap;
       logCompletedSession(elapsed, 'focus', finishedLap);
+
+      isOvertime = false;
+      overtimeSeconds = 0;
 
       const totalLaps = parseInt(config.lapsPerCycle, 10) || 4;
       if (currentLap >= totalLaps) {
@@ -829,13 +929,17 @@
 
       currentPhase = 'focus';
       totalSeconds = config.focusDurationMin * 60;
+      initialPhaseSeconds = totalSeconds;
       remainingSeconds = totalSeconds;
       renderLapPips();
       renderTimer(true);
       persistActiveState();
     } else {
+      isOvertime = false;
+      overtimeSeconds = 0;
       currentPhase = 'focus';
       totalSeconds = config.focusDurationMin * 60;
+      initialPhaseSeconds = totalSeconds;
       remainingSeconds = totalSeconds;
       modeTabBtns.forEach(btn => {
         if (btn.dataset.mode === 'focus') btn.classList.add('active');

@@ -11,6 +11,24 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    *, *::before, *::after, html, body {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    *::-webkit-scrollbar, ::-webkit-scrollbar,
+    *::-webkit-scrollbar-thumb, *::-webkit-scrollbar-track,
+    *::-webkit-scrollbar-button, *::-webkit-scrollbar-corner {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      max-width: 0 !important;
+      max-height: 0 !important;
+      background: transparent !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
   <script>
     (function () {
       try {
@@ -77,6 +95,8 @@
 
         <!-- Mechanical Split-Flap Clock Display -->
         <div class="split-flap-display" id="split-flap-chronometer">
+          <!-- Overtime '+' Badge Indicator -->
+          <div class="overflow-badge" id="kronos-overflow-badge" aria-label="Overtime Flow State">+</div>
           <!-- Minutes Tens -->
           <div class="flap-tile-group">
             <div class="flap-tile" id="tile-m1">

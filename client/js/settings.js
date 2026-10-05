@@ -431,12 +431,19 @@
         </div>
         <div class="card-title-row">
           <input type="text" class="session-title-input" value="${escapeHtml(session.title)}" placeholder="Add session title..." aria-label="Session Title">
-          <button class="card-delete-btn" aria-label="Remove session">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <div class="card-btn-group">
+            <button class="card-resume-btn" aria-label="Resume this session lap">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+              </svg>
+            </button>
+            <button class="card-delete-btn" aria-label="Remove session">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="card-tags-row">
           <div class="tags-scroll-strip">
@@ -446,21 +453,15 @@
                 <button class="tag-del-btn" aria-label="Delete tag">&times;</button>
               </span>
             `).join('')}
-            <button class="add-tag-btn">+ Tag</button>
+            ${tags.length < 3 ? '<button class="add-tag-btn">+ Tag</button>' : ''}
           </div>
-          <button class="card-resume-btn" aria-label="Resume session in Focus Bar">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            Resume
-          </button>
         </div>
       `;
 
       // 1. Duration input edit
       const durInput = card.querySelector('.session-duration-input');
       durInput.addEventListener('change', (e) => {
-        const val = Math.min(90, Math.max(1, parseInt(e.target.value, 10) || 25));
+        const val = Math.min(240, Math.max(1, parseInt(e.target.value, 10) || 25));
         durInput.value = val;
         session.durationMin = val;
         if (window.KronosStorage) {
@@ -524,61 +525,96 @@
         });
       });
 
-      // 6. Tags: Add new tag button
+      // 6. Tags: Add new tag button (max 3 tags per session card)
       const addTagBtn = card.querySelector('.add-tag-btn');
-      addTagBtn.addEventListener('click', () => {
-        addTagBtn.style.display = 'none';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'tag-inline-input';
-        input.placeholder = 'Tag...';
-        input.maxLength = 20;
-        addTagBtn.parentNode.insertBefore(input, addTagBtn);
-        input.focus();
+      if (addTagBtn) {
+        addTagBtn.addEventListener('click', () => {
+          if (tags.length >= 3) return;
+          addTagBtn.style.display = 'none';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'tag-inline-input';
+          input.placeholder = 'Tag...';
+          input.maxLength = 20;
+          addTagBtn.parentNode.insertBefore(input, addTagBtn);
+          input.focus();
 
-        const commitTag = () => {
-          const val = input.value.trim();
-          if (val && !tags.includes(val)) {
-            tags.push(val);
-            session.tags = tags;
-            if (window.KronosStorage) {
-              window.KronosStorage.updateTags(session.id, tags);
+          const commitTag = () => {
+            const val = input.value.trim();
+            if (val && !tags.includes(val) && tags.length < 3) {
+              tags.push(val);
+              session.tags = tags;
+              if (window.KronosStorage) {
+                window.KronosStorage.updateTags(session.id, tags);
+              }
             }
-          }
-          renderSessionList();
-          renderAnalytics();
-        };
+            renderSessionList();
+            renderAnalytics();
+          };
 
-        input.addEventListener('keydown', (ev) => {
-          if (ev.key === 'Enter') commitTag();
-          else if (ev.key === 'Escape') {
-            input.remove();
-            addTagBtn.style.display = '';
-          }
+          input.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') commitTag();
+            else if (ev.key === 'Escape') {
+              input.remove();
+              addTagBtn.style.display = '';
+            }
+          });
+          input.addEventListener('blur', commitTag);
         });
-        input.addEventListener('blur', commitTag);
-      });
+      }
 
-      // 7. Resume Session in Dockable Panel
+      // 7. Resume Session in Dockable Panel (Icon-Only next to Delete)
       const resumeBtn = card.querySelector('.card-resume-btn');
-      resumeBtn.addEventListener('click', () => {
-        if (window.KronosStorage) {
-          window.KronosStorage.broadcastSync("resume_session", {
+      if (resumeBtn) {
+        resumeBtn.addEventListener('click', () => {
+          let lapNum = session.lap ? parseInt(session.lap, 10) : 1;
+          if (session.title) {
+            const m = session.title.match(/Lap\s*(\d+)/i);
+            if (m) lapNum = parseInt(m[1], 10);
+          }
+
+          const resumePayload = {
             id: session.id,
             title: session.title,
             phase: session.phase || 'focus',
             durationMin: session.durationMin || 25,
-            tags: session.tags || []
-          });
-        }
-        try {
-          if (window.__adobe_cep__) {
-            window.__adobe_cep__.requestOpenExtension("neographs.kronos.panel", "");
-          } else if (csInterface && csInterface.requestOpenExtension) {
-            csInterface.requestOpenExtension("neographs.kronos.panel", "");
+            lap: lapNum,
+            currentLap: lapNum,
+            tags: session.tags || [],
+            resumeTriggerId: Date.now()
+          };
+
+          // 1. Direct active state persistence with auto-start signal
+          if (window.KronosStorage) {
+            window.KronosStorage.saveActiveState({
+              remainingSeconds: (session.durationMin || 25) * 60,
+              totalSeconds: (session.durationMin || 25) * 60,
+              initialPhaseSeconds: (session.durationMin || 25) * 60,
+              isOvertime: false,
+              overtimeSeconds: 0,
+              currentPhase: session.phase || 'focus',
+              currentLap: lapNum,
+              isRunning: true,
+              activeSessionTitle: session.title,
+              activeSessionTags: session.tags || [],
+              resumeTriggerId: resumePayload.resumeTriggerId,
+              lastTimestamp: Date.now()
+            });
+
+            // 2. Broadcast via BroadcastChannel + CSEvent + storage pulse
+            window.KronosStorage.broadcastSync("resume_session", resumePayload);
           }
-        } catch (e) {}
-      });
+
+          // 3. Bring panel to focus in After Effects
+          try {
+            if (window.__adobe_cep__) {
+              window.__adobe_cep__.requestOpenExtension("neographs.kronos.panel", "");
+            } else if (csInterface && csInterface.requestOpenExtension) {
+              csInterface.requestOpenExtension("neographs.kronos.panel", "");
+            }
+          } catch (e) {}
+        });
+      }
 
       sessionContainer.appendChild(card);
     });
