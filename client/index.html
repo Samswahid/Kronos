@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kronos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script>
-    (function() {
+    (function () {
       try {
         var theme = 'charcoal';
         if (typeof window.require === 'function') {
@@ -27,20 +30,22 @@
           }
         }
         document.documentElement.setAttribute('data-theme', theme);
-      } catch(e) {}
+      } catch (e) { }
     })();
   </script>
 </head>
+
 <body class="dot-grid-bg">
   <div class="panel-root">
-    
+
     <!-- KRONOS DOCKABLE BAR (76-80px Height) -->
     <div id="kronos-dock-bar" class="kronos-bar dot-grid-bg" role="region" aria-label="Kronos Focus Bar">
-      
+
       <!-- ZONE A: Modular Squircle Rotary & Inset Lap Channel -->
       <div class="kronos-zone zone-left">
         <!-- Modular Squircle Rotary (Settings Launcher) -->
-        <button id="kronos-crown-btn" class="squircle-modular-trigger" aria-label="Open Session Vault" title="Open Session Vault">
+        <button id="kronos-crown-btn" class="squircle-modular-trigger" aria-label="Open Session Vault"
+          title="Open Session Vault">
           <span class="squircle-bolt tl"></span>
           <span class="squircle-bolt tr"></span>
           <span class="squircle-bolt bl"></span>
@@ -125,18 +130,22 @@
         <div class="gauge-button-capsule">
           <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
             <!-- Only the progress arc is drawn (no grey track). r=16 => circumference 100.53 -->
-            <circle id="kronos-progress-arc" class="ring-arc" cx="19" cy="19" r="16" stroke-dasharray="100.53" stroke-dashoffset="100.53" />
+            <circle id="kronos-progress-arc" class="ring-arc" cx="19" cy="19" r="16" stroke-dasharray="100.53"
+              stroke-dashoffset="100.53" />
           </svg>
 
           <!-- Tactile Push-Button Trigger -->
-          <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer" title="Start or Pause Timer">
+          <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer"
+            title="Start or Pause Timer">
             <span class="btn-face">
               <!-- Play Icon (shown when stopped) — soft-cornered, optically centred (centroid on 12,12) -->
-              <svg class="icon-glyph glyph-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+              <svg class="icon-glyph glyph-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"
+                stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
                 <polygon points="8.75 6.5 18.25 12 8.75 17.5"></polygon>
               </svg>
               <!-- Pause Icon (shown when running) — symmetric pill bars centred on x=12 -->
-              <svg class="icon-glyph glyph-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+              <svg class="icon-glyph glyph-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"
+                style="display: none;">
                 <rect x="7" y="5.5" width="3.5" height="13" rx="1.75"></rect>
                 <rect x="13.5" y="5.5" width="3.5" height="13" rx="1.75"></rect>
               </svg>
@@ -147,13 +156,15 @@
         <!-- Inset Micro Actions Box Container -->
         <div class="micro-actions">
           <button id="kronos-skip-btn" class="micro-icon-btn" aria-label="Complete or Skip Lap" title="Skip Lap">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <polygon points="5 4 15 12 5 20 5 4"></polygon>
               <line x1="19" y1="5" x2="19" y2="19"></line>
             </svg>
           </button>
           <button id="kronos-reset-btn" class="micro-icon-btn" aria-label="Reset Timer" title="Reset Timer">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
               <path d="M3 3v5h5"></path>
             </svg>
@@ -172,4 +183,5 @@
   <script src="js/storage.js"></script>
   <script src="js/app.js"></script>
 </body>
+
 </html>

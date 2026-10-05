@@ -178,22 +178,22 @@
                 <div class="kronos-zone zone-right">
                   <!-- Circular Gauge & Axial Plunger Cylinder -->
                   <div class="gauge-button-capsule">
-                    <svg class="progress-ring-svg" width="44" height="44" viewBox="0 0 44 44">
-                      <circle class="ring-track" cx="22" cy="22" r="18" />
-                      <circle id="kronos-progress-arc" class="ring-arc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="113.1" />
+                    <svg class="progress-ring-svg" width="38" height="38" viewBox="0 0 38 38">
+                      <!-- Only progress arc is drawn. r=16 => circumference 100.53 -->
+                      <circle id="kronos-progress-arc" class="ring-arc" cx="19" cy="19" r="16" stroke-dasharray="100.53" stroke-dashoffset="100.53" />
                     </svg>
 
                     <!-- Tactile Push-Button Trigger -->
                     <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer" title="Start or Pause Timer">
                       <span class="btn-face">
-                        <!-- Play Icon (shown when playing) -->
-                        <svg class="icon-glyph glyph-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                          <polygon points="7.5 5 18.5 12 7.5 19"></polygon>
+                        <!-- Play Icon (shown when stopped) — soft-cornered, optically centred (centroid on 12,12) -->
+                        <svg class="icon-glyph glyph-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+                          <polygon points="8.75 6.5 18.25 12 8.75 17.5"></polygon>
                         </svg>
-                        <!-- Pause Icon (shown when not playing) -->
-                        <svg class="icon-glyph glyph-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                          <rect x="6" y="5" width="4" height="14" rx="1"></rect>
-                          <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+                        <!-- Pause Icon (shown when running) — symmetric pill bars centred on x=12 -->
+                        <svg class="icon-glyph glyph-pause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                          <rect x="7" y="5.5" width="3.5" height="13" rx="1.75"></rect>
+                          <rect x="13.5" y="5.5" width="3.5" height="13" rx="1.75"></rect>
                         </svg>
                       </span>
                     </button>

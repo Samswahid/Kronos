@@ -110,9 +110,9 @@
               applyTheme(config.theme);
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       }, 300);
-    } catch (e) {}
+    } catch (e) { }
   })();
 
   // --- 2. AUDIO SYNTHESIS ENGINE (Web Audio API) ---
@@ -155,7 +155,7 @@
 
       osc.start();
       osc.stop(audioCtx.currentTime + 0.04);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function playAcousticChime() {
@@ -183,7 +183,7 @@
         osc.start(startTime);
         osc.stop(startTime + duration + 0.1);
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function playTickSound() {
@@ -203,7 +203,7 @@
       gain.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.012);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // --- 3. DOM ELEMENTS ---

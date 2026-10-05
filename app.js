@@ -343,8 +343,8 @@
   const btnSavePrefs = document.getElementById('btn-save-prefs');
   const saveStatus = document.getElementById('save-status-indicator');
 
-  // SVG Circumference for 18px radius circle = 2 * pi * 18 ~= 113.1
-  const RING_CIRCUMFERENCE = 113.1;
+  // SVG Circumference for 16px radius circle = 2 * pi * 16 ~= 100.53 (matches client/js/app.js)
+  const RING_CIRCUMFERENCE = 100.53;
   if (progressArc) {
     progressArc.style.strokeDasharray = `${RING_CIRCUMFERENCE}px`;
     progressArc.setAttribute('stroke-dasharray', `${RING_CIRCUMFERENCE}`);
@@ -493,8 +493,8 @@
     playMechanicalClick('press');
     isRunning = true;
     toggleBtn.classList.add('running');
-    playGlyph.style.display = 'block';
-    pauseGlyph.style.display = 'none';
+    playGlyph.style.display = 'none';
+    pauseGlyph.style.display = 'block';
 
     timerInterval = setInterval(() => {
       if (remainingSeconds > 0) {
@@ -512,8 +512,8 @@
     playMechanicalClick('release');
     isRunning = false;
     toggleBtn.classList.remove('running');
-    playGlyph.style.display = 'none';
-    pauseGlyph.style.display = 'block';
+    playGlyph.style.display = 'block';
+    pauseGlyph.style.display = 'none';
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;

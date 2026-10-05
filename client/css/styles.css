@@ -40,10 +40,22 @@
   --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-grotesk: 'Space Grotesk', var(--font-sans);
+
+  /* Tactile Rotary Knob Physical Attributes (Overhead Zenith Lighting & Bottom Drop Shadow) */
+  --knob-body-top: #36363c;
+  --knob-body-mid: #25252a;
+  --knob-body-bot: #18181b;
+  --knob-dish-bg: #1e1e22;
+  --knob-dish-light: rgba(255, 255, 255, 0.06);
+  --knob-dish-dark: rgba(0, 0, 0, 0.5);
+  --knob-rim-light: rgba(255, 255, 255, 0.24);
+  --knob-ambient-shadow: rgba(0, 0, 0, 0.7);
 }
 
 /* Base Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -51,7 +63,8 @@
   -webkit-user-select: none;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   background-color: var(--bg-base);
@@ -164,10 +177,25 @@ html, body {
   pointer-events: none !important;
 }
 
-.squircle-bolt.tl { top: 3.5px !important; left: 3.5px !important; }
-.squircle-bolt.tr { top: 3.5px !important; right: 3.5px !important; }
-.squircle-bolt.bl { bottom: 3.5px !important; left: 3.5px !important; }
-.squircle-bolt.br { bottom: 3.5px !important; right: 3.5px !important; }
+.squircle-bolt.tl {
+  top: 3.5px !important;
+  left: 3.5px !important;
+}
+
+.squircle-bolt.tr {
+  top: 3.5px !important;
+  right: 3.5px !important;
+}
+
+.squircle-bolt.bl {
+  bottom: 3.5px !important;
+  left: 3.5px !important;
+}
+
+.squircle-bolt.br {
+  bottom: 3.5px !important;
+  right: 3.5px !important;
+}
 
 .squircle-core-knob {
   width: 20px !important;
@@ -325,8 +353,13 @@ html, body {
   pointer-events: none;
 }
 
-.hinge-l { left: -0.5px; }
-.hinge-r { right: -0.5px; }
+.hinge-l {
+  left: -0.5px;
+}
+
+.hinge-r {
+  right: -0.5px;
+}
 
 /* The horizontal flap seam (Fixed Z-50 Overlay: NEVER moves or shifts) */
 .flap-seam {
@@ -420,6 +453,7 @@ html, body {
   0% {
     transform: rotateX(0deg);
   }
+
   100% {
     transform: rotateX(-90deg);
     opacity: 0;
@@ -441,6 +475,7 @@ html, body {
   0% {
     transform: rotateX(90deg);
   }
+
   100% {
     transform: rotateX(0deg);
   }
@@ -457,8 +492,13 @@ html, body {
 }
 
 @keyframes shadowFadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .flap-leaf-bottom::after {
@@ -471,8 +511,13 @@ html, body {
 }
 
 @keyframes shadowFadeOut {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 .flap-colon {
@@ -493,8 +538,9 @@ html, body {
   opacity: 0.75;
 }
 
-/* ZONE C: Axial Plunger (Braun Action 03 Authentic)
-   Dark recessed surrounding socket channel + Dead-centered cylinder with no hover shift */
+/* ZONE C: TACTILE ROTARY PUSH-KNOB (AUTHENTIC HARDWARE INDUSTRIAL DEPTH)
+   Modeled after precision audio console dials: overhead zenith illumination,
+   steep bottom drop shadow, outer chamfer rim, and concave dish dimple. */
 .gauge-button-capsule {
   position: relative !important;
   width: 38px !important;
@@ -502,11 +548,9 @@ html, body {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  /* Same surface as the split-flap timer container — follows every theme */
   background: var(--theme-clock-bg, var(--bg-panel, #111215)) !important;
   border-radius: 50% !important;
-  /* Concentric only (zero x/y offsets) so nothing reads as tilted or lit from one side */
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: inset 0 2px 4.5px rgba(0, 0, 0, 0.85), inset 0 -0.5px 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.4) !important;
   border: none !important;
   box-sizing: border-box !important;
   margin: 0 !important;
@@ -535,14 +579,20 @@ html, body {
   stroke: var(--theme-accent-color, #ea580c) !important;
   stroke-width: 2 !important;
   stroke-linecap: round !important;
-  stroke-dasharray: 100.53px !important; /* 2πr, r=16 — must match RING_CIRCUMFERENCE in app.js */
+  stroke-dasharray: 100.53px !important;
+  /* 2πr, r=16 — must match RING_CIRCUMFERENCE in app.js */
   stroke-dashoffset: 100.53px;
   filter: drop-shadow(0 0 3px var(--theme-accent-color, #ea580c)) !important;
   transition: stroke-dashoffset 180ms linear, stroke 180ms ease, opacity 120ms ease !important;
 }
 
-/* Tactile Push-Button Trigger - centred with inset/margin:auto (26px in 38px capsule => 6px each side, no half-pixel blur) */
-.tactile-round-btn, .axial-plunger-btn {
+/* Tactile Rotary Push-Button Trigger
+   - Centred with inset: 0 / margin: auto
+   - Physical depth: Vertical overhead lighting creates pronounced bottom drop shadow (no 45° angle)
+   - Angle is based on the bottom shadow establishing physical projection off the panel socket */
+.tactile-round-btn,
+.axial-plunger-btn,
+#kronos-toggle-btn {
   position: absolute !important;
   inset: 0 !important;
   margin: auto !important;
@@ -550,11 +600,28 @@ html, body {
   width: 26px !important;
   height: 26px !important;
   border-radius: 50% !important;
-  /* Braun-style concave dish: rim catches light, centre sits recessed — all concentric, no direction */
-  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.06) 48%, rgba(255, 255, 255, 0.05) 82%, rgba(255, 255, 255, 0.09) 100%), var(--theme-plate-color, #232326) !important;
+  /* Top-down cylindrical gradient: overhead light catches upper surface, lower curve darkens into shade */
+  background: linear-gradient(180deg, 
+    var(--knob-body-top, #36363c) 0%, 
+    var(--knob-body-mid, #25252a) 50%, 
+    var(--knob-body-bot, #18181b) 100%
+  ) !important;
   border: none !important;
   outline: none !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+  /* Realistic bottom drop shadow:
+     1. Contact occlusion: sharp dark shadow right at bottom contact (0 1.5px 2.5px)
+     2. Main cast shadow: projecting downwards onto socket (0 4px 7.5px -0.5px)
+     3. Ambient diffuse shadow: soft downward projection (0 7.5px 14px -1px)
+     4. Dark outer perimeter bezel (0 0 0 1px)
+     5. Top rim specular light-catch (inset 0 1px 0.8px)
+     6. Bottom rim undercut shadow (inset 0 -1.5px 2px) */
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.85),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.75),
+    0 7.5px 14px -1px var(--knob-ambient-shadow, rgba(0, 0, 0, 0.55)),
+    0 0 0 1px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0.8px var(--knob-rim-light, rgba(255, 255, 255, 0.28)),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.75) !important;
   cursor: pointer !important;
   padding: 0 !important;
   box-sizing: border-box !important;
@@ -563,50 +630,91 @@ html, body {
   overflow: hidden !important;
   z-index: 2 !important;
   display: block !important;
-  transition: filter 120ms ease, box-shadow 120ms ease, transform 120ms ease !important;
+  transition: filter 120ms ease, box-shadow 120ms ease, transform 120ms ease, background 120ms ease !important;
 }
 
-/* Faint concentric inner groove (dish edge) */
-.tactile-round-btn::before, .axial-plunger-btn::before {
+/* Machined concentric outer chamfer / bezel ring */
+.tactile-round-btn::before,
+.axial-plunger-btn::before {
   content: '' !important;
   position: absolute !important;
-  inset: 3px !important;
+  inset: 1.5px !important;
   border-radius: 50% !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.03) !important;
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 0.12) 0%, 
+    rgba(255, 255, 255, 0.02) 42%, 
+    rgba(0, 0, 0, 0.28) 100%
+  ) !important;
+  box-shadow: inset 0 0.8px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1.5px rgba(0, 0, 0, 0.6) !important;
   pointer-events: none !important;
+  transition: opacity 120ms ease, box-shadow 120ms ease !important;
 }
 
-.tactile-round-btn:hover, .axial-plunger-btn:hover {
-  filter: brightness(1.15) !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 6px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.11) !important;
+/* Hover state: knob illumination intensifies, bottom shadow deepens */
+.tactile-round-btn:hover,
+.axial-plunger-btn:hover {
+  filter: brightness(1.12) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.9),
+    0 5px 9px -0.5px rgba(0, 0, 0, 0.82),
+    0 8.5px 16px -1px var(--knob-ambient-shadow, rgba(0, 0, 0, 0.65)),
+    0 0 0 1px rgba(0, 0, 0, 0.78),
+    inset 0 1.2px 1px var(--knob-rim-light, rgba(255, 255, 255, 0.38)),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* Press = uniform sink toward centre (scale only, no shift) */
-.tactile-round-btn:active, .axial-plunger-btn:active {
-  transform: scale(0.94) !important;
-  filter: brightness(0.95) !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(0, 0, 0, 0.55) !important;
+/* Active / pressed state: authentic mechanical plunger depression */
+.tactile-round-btn:active,
+.axial-plunger-btn:active {
+  transform: translateY(1.5px) scale(0.97) !important;
+  filter: brightness(0.96) !important;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(0, 0, 0, 0.78),
+    inset 0 2px 4px rgba(0, 0, 0, 0.85),
+    inset 0 -0.5px 1px rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Running: thin concentric accent halo */
-.tactile-round-btn.running, .axial-plunger-btn.running {
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--theme-accent-color, #ea580c) !important;
+/* Running state: vibrant accent halo indicating active timer */
+.tactile-round-btn.running,
+.axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.85),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.75),
+    0 7.5px 14px -1px var(--knob-ambient-shadow, rgba(0, 0, 0, 0.55)),
+    0 0 0 1px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0.8px var(--knob-rim-light, rgba(255, 255, 255, 0.28)),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px var(--theme-accent-color, #ea580c) !important;
 }
 
+/* Tactile Concave Finger Dish / Well (.btn-face)
+   Optical physics of a concave dish:
+   - Top lip blocks zenith light -> dark inner drop shadow at top (inset 0 2px 3.5px)
+   - Bottom curve angles up to catch zenith light -> inner highlight at bottom (inset 0 -1px 1.5px) */
 .btn-face {
   position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+  inset: 3.5px !important;
+  border-radius: 50% !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   pointer-events: none !important;
   margin: 0 !important;
   padding: 0 !important;
+  background: radial-gradient(circle at 50% 36%, 
+    var(--knob-dish-light, rgba(255, 255, 255, 0.06)) 0%, 
+    rgba(0, 0, 0, 0.15) 58%, 
+    var(--knob-dish-dark, rgba(0, 0, 0, 0.48)) 100%
+  ), var(--knob-dish-bg, #1e1e22) !important;
+  box-shadow: 
+    inset 0 2px 3.5px rgba(0, 0, 0, 0.8),
+    inset 0 -1px 1.5px rgba(255, 255, 255, 0.14),
+    0 1px 1.5px rgba(0, 0, 0, 0.5) !important;
   color: var(--theme-font-color, #e2e2e5) !important;
-  opacity: 0.85 !important;
-  transition: color 120ms ease, opacity 120ms ease !important;
+  opacity: 0.9 !important;
+  transition: color 120ms ease, opacity 120ms ease, box-shadow 120ms ease, background 120ms ease !important;
 }
 
 .tactile-round-btn:hover .btn-face,
@@ -614,7 +722,7 @@ html, body {
   opacity: 1 !important;
 }
 
-/* Icons are flex-centred inside .btn-face (no translate => crisp, no sub-pixel drift) */
+/* Icons are flex-centred inside .btn-face with engraved hardware relief */
 .btn-face .icon-glyph {
   position: static !important;
   transform: none !important;
@@ -624,6 +732,8 @@ html, body {
   margin: 0 !important;
   padding: 0 !important;
   flex-shrink: 0 !important;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.85));
+  transition: filter 120ms ease, color 120ms ease !important;
 }
 
 /* Stopped -> PLAY icon (press to start); Running -> PAUSE icon (press to pause) */
@@ -1651,40 +1761,124 @@ html, body {
 }
 
 /* Individual Preview Swatches */
-.theme-pv-charcoal { background: #141414; }
-.theme-pv-charcoal .pv-crown { background: #d97706; }
-.theme-pv-charcoal .pv-flap { background: #232326; color: #e2e2e5; }
-.theme-pv-charcoal .pv-ring { border-color: #d97706; }
+.theme-pv-charcoal {
+  background: #141414;
+}
 
-.theme-pv-lilac { background: #120e24; }
-.theme-pv-lilac .pv-crown { background: #9b8bf4; }
-.theme-pv-lilac .pv-flap { background: #2b2454; color: #f0ebff; }
-.theme-pv-lilac .pv-ring { border-color: #9b8bf4; }
+.theme-pv-charcoal .pv-crown {
+  background: #d97706;
+}
 
-.theme-pv-braun { background: #ece6da; }
-.theme-pv-braun .pv-crown { background: #ea580c; }
-.theme-pv-braun .pv-flap { background: #272625; color: #f7f4ed; }
-.theme-pv-braun .pv-ring { border-color: #ea580c; }
+.theme-pv-charcoal .pv-flap {
+  background: #232326;
+  color: #e2e2e5;
+}
 
-.theme-pv-cyber { background: #09090c; }
-.theme-pv-cyber .pv-crown { background: #7969ef; }
-.theme-pv-cyber .pv-flap { background: #161622; color: #a89eff; }
-.theme-pv-cyber .pv-ring { border-color: #7969ef; }
+.theme-pv-charcoal .pv-ring {
+  border-color: #d97706;
+}
 
-.theme-pv-matcha { background: #1f2421; }
-.theme-pv-matcha .pv-crown { background: #c29b62; }
-.theme-pv-matcha .pv-flap { background: #2b4238; color: #ede2cf; }
-.theme-pv-matcha .pv-ring { border-color: #c29b62; }
+.theme-pv-lilac {
+  background: #120e24;
+}
 
-.theme-pv-cobalt { background: #11161d; }
-.theme-pv-cobalt .pv-crown { background: #ff6b18; }
-.theme-pv-cobalt .pv-flap { background: #1c7ed6; color: #ffffff; }
-.theme-pv-cobalt .pv-ring { border-color: #ff6b18; }
+.theme-pv-lilac .pv-crown {
+  background: #9b8bf4;
+}
 
-.theme-pv-ochre { background: #18181b; }
-.theme-pv-ochre .pv-crown { background: #f59f00; }
-.theme-pv-ochre .pv-flap { background: #f59f00; color: #121212; }
-.theme-pv-ochre .pv-ring { border-color: #f59f00; }
+.theme-pv-lilac .pv-flap {
+  background: #2b2454;
+  color: #f0ebff;
+}
+
+.theme-pv-lilac .pv-ring {
+  border-color: #9b8bf4;
+}
+
+.theme-pv-braun {
+  background: #ece6da;
+}
+
+.theme-pv-braun .pv-crown {
+  background: #ea580c;
+}
+
+.theme-pv-braun .pv-flap {
+  background: #272625;
+  color: #f7f4ed;
+}
+
+.theme-pv-braun .pv-ring {
+  border-color: #ea580c;
+}
+
+.theme-pv-cyber {
+  background: #09090c;
+}
+
+.theme-pv-cyber .pv-crown {
+  background: #7969ef;
+}
+
+.theme-pv-cyber .pv-flap {
+  background: #161622;
+  color: #a89eff;
+}
+
+.theme-pv-cyber .pv-ring {
+  border-color: #7969ef;
+}
+
+.theme-pv-matcha {
+  background: #1f2421;
+}
+
+.theme-pv-matcha .pv-crown {
+  background: #c29b62;
+}
+
+.theme-pv-matcha .pv-flap {
+  background: #2b4238;
+  color: #ede2cf;
+}
+
+.theme-pv-matcha .pv-ring {
+  border-color: #c29b62;
+}
+
+.theme-pv-cobalt {
+  background: #11161d;
+}
+
+.theme-pv-cobalt .pv-crown {
+  background: #ff6b18;
+}
+
+.theme-pv-cobalt .pv-flap {
+  background: #1c7ed6;
+  color: #ffffff;
+}
+
+.theme-pv-cobalt .pv-ring {
+  border-color: #ff6b18;
+}
+
+.theme-pv-ochre {
+  background: #18181b;
+}
+
+.theme-pv-ochre .pv-crown {
+  background: #f59f00;
+}
+
+.theme-pv-ochre .pv-flap {
+  background: #f59f00;
+  color: #121212;
+}
+
+.theme-pv-ochre .pv-ring {
+  border-color: #f59f00;
+}
 
 .theme-card-info {
   flex: 1;
@@ -1718,9 +1912,20 @@ html, body {
   letter-spacing: 0.05em;
 }
 
-.theme-badge.p1 { background: rgba(155, 139, 244, 0.2); color: #b3a5ff; }
-.theme-badge.p2 { background: rgba(234, 88, 12, 0.2); color: #ea580c; }
-.theme-badge.p3 { background: rgba(121, 105, 239, 0.2); color: #9890ee; }
+.theme-badge.p1 {
+  background: rgba(155, 139, 244, 0.2);
+  color: #b3a5ff;
+}
+
+.theme-badge.p2 {
+  background: rgba(234, 88, 12, 0.2);
+  color: #ea580c;
+}
+
+.theme-badge.p3 {
+  background: rgba(121, 105, 239, 0.2);
+  color: #9890ee;
+}
 
 .theme-desc {
   font-size: 9px;
@@ -1853,6 +2058,7 @@ body,
 .mode-tab-btn.active {
   background: var(--theme-plate-color, #232326) !important;
 }
+
 .flap-bottom,
 .flap-leaf-bottom {
   background: var(--theme-plate-color, #232326) !important;
@@ -1884,32 +2090,27 @@ body,
   background: var(--theme-accent-color, #d97706) !important;
   box-shadow: 0 0 6px var(--theme-accent-color, #d97706) !important;
 }
+
 .vault-tab-btn.active .tab-count-badge {
   color: var(--theme-accent-color, #d97706) !important;
 }
+
 .lap-counter-label {
   color: var(--theme-font-color, #ffffff) !important;
 }
+
 .lap-pip.active {
   background: var(--theme-font-color, #ffffff) !important;
   box-shadow: 0 0 5px var(--theme-font-color, #ffffff), inset 0 0.5px 1px #ffffff !important;
 }
+
 .ring-arc {
   stroke: var(--theme-accent-color, #d97706) !important;
 }
-.axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #d97706) !important;
-}
+
 .micro-icon-btn {
   background: var(--theme-plate-color, #272625) !important;
   color: var(--theme-font-color, #ffffff) !important;
-}
-.tactile-round-btn:hover {
-  filter: brightness(1.1);
-}
-.tactile-round-btn:active {
-  filter: brightness(0.95);
-  transform: scale(0.94);
 }
 
 /* --------------------------------------------------------------------------
@@ -1934,6 +2135,44 @@ body,
   --text-muted: #606060;
   --text-dim: #484848;
   --accent-amber: #d97706;
+
+  /* Tactile Rotary Knob Physical Attributes */
+  --knob-body-top: #36363c;
+  --knob-body-mid: #25252a;
+  --knob-body-bot: #18181b;
+  --knob-dish-bg: #1e1e22;
+  --knob-dish-light: rgba(255, 255, 255, 0.06);
+  --knob-dish-dark: rgba(0, 0, 0, 0.5);
+  --knob-rim-light: rgba(255, 255, 255, 0.24);
+  --knob-ambient-shadow: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="charcoal"] .tactile-round-btn,
+[data-theme="charcoal"] .axial-plunger-btn,
+[data-theme="charcoal"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.85),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.75),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.75) !important;
+}
+[data-theme="charcoal"] .tactile-round-btn .btn-face,
+[data-theme="charcoal"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.15) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="charcoal"] .tactile-round-btn.running,
+[data-theme="charcoal"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.85),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.75),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px var(--theme-accent-color, #d97706) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -1959,6 +2198,16 @@ body,
   --text-dim: #5c5382;
   --accent-amber: #9b8bf4;
   --flap-tile-bg: #221c46;
+
+  /* Tactile Rotary Knob Physical Attributes */
+  --knob-body-top: #3d3372;
+  --knob-body-mid: #2b2256;
+  --knob-body-bot: #1b153b;
+  --knob-dish-bg: #221b46;
+  --knob-dish-light: rgba(240, 235, 255, 0.08);
+  --knob-dish-dark: rgba(9, 6, 25, 0.6);
+  --knob-rim-light: rgba(240, 235, 255, 0.35);
+  --knob-ambient-shadow: rgba(6, 4, 18, 0.85);
 }
 
 [data-theme="neon-lilac"] #kronos-dock-bar,
@@ -2045,8 +2294,32 @@ body[data-theme="neon-lilac"] .kronos-bar {
   filter: drop-shadow(0 0 3px rgba(155, 139, 244, 0.6));
 }
 
-[data-theme="neon-lilac"] .axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #9b8bf4) !important;
+[data-theme="neon-lilac"] .tactile-round-btn,
+[data-theme="neon-lilac"] .axial-plunger-btn,
+[data-theme="neon-lilac"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.88),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.78),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.78) !important;
+}
+[data-theme="neon-lilac"] .tactile-round-btn .btn-face,
+[data-theme="neon-lilac"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.18) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="neon-lilac"] .tactile-round-btn.running,
+[data-theme="neon-lilac"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.88),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.78),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1px var(--theme-accent-color, #9b8bf4) !important;
 }
 
 [data-theme="neon-lilac"] .micro-actions {
@@ -2081,6 +2354,16 @@ body[data-theme="neon-lilac"] .kronos-bar {
   --text-dim: #999388;
   --accent-amber: #ea580c;
   --flap-tile-bg: #272625;
+
+  /* Tactile Rotary Knob Physical Attributes */
+  --knob-body-top: #3e3c3a;
+  --knob-body-mid: #2c2b2a;
+  --knob-body-bot: #191817;
+  --knob-dish-bg: #222120;
+  --knob-dish-light: rgba(255, 255, 255, 0.08);
+  --knob-dish-dark: rgba(0, 0, 0, 0.55);
+  --knob-rim-light: rgba(255, 255, 255, 0.3);
+  --knob-ambient-shadow: rgba(22, 19, 16, 0.65);
 }
 
 [data-theme="braun-1972"] #kronos-dock-bar,
@@ -2167,8 +2450,32 @@ body[data-theme="braun-1972"] .kronos-bar {
   stroke: #ea580c !important;
 }
 
-[data-theme="braun-1972"] .axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #ea580c) !important;
+[data-theme="braun-1972"] .tactile-round-btn,
+[data-theme="braun-1972"] .axial-plunger-btn,
+[data-theme="braun-1972"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.85),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.75),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.75) !important;
+}
+[data-theme="braun-1972"] .tactile-round-btn .btn-face,
+[data-theme="braun-1972"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.16) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="braun-1972"] .tactile-round-btn.running,
+[data-theme="braun-1972"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.85),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.75),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.75),
+    inset 0 0 0 1px var(--theme-accent-color, #ea580c) !important;
 }
 
 [data-theme="braun-1972"] .micro-actions {
@@ -2203,6 +2510,16 @@ body[data-theme="braun-1972"] .kronos-bar {
   --text-dim: #4b456b;
   --accent-amber: #7969ef;
   --flap-tile-bg: #151520;
+
+  /* Tactile Rotary Knob Physical Attributes */
+  --knob-body-top: #29293e;
+  --knob-body-mid: #1a1a2a;
+  --knob-body-bot: #0d0d17;
+  --knob-dish-bg: #141423;
+  --knob-dish-light: rgba(168, 158, 255, 0.08);
+  --knob-dish-dark: rgba(3, 3, 8, 0.7);
+  --knob-rim-light: rgba(168, 158, 255, 0.38);
+  --knob-ambient-shadow: rgba(0, 0, 0, 0.9);
 }
 
 [data-theme="cyber-violet"] #kronos-dock-bar,
@@ -2289,8 +2606,33 @@ body[data-theme="cyber-violet"] .kronos-bar {
   filter: drop-shadow(0 0 4px #7969ef);
 }
 
-[data-theme="cyber-violet"] .axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #7969ef) !important;
+[data-theme="cyber-violet"] .tactile-round-btn,
+[data-theme="cyber-violet"] .axial-plunger-btn,
+[data-theme="cyber-violet"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.95),
+    0 4px 8px -0.5px rgba(0, 0, 0, 0.88),
+    0 8px 16px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.85) !important;
+}
+[data-theme="cyber-violet"] .tactile-round-btn .btn-face,
+[data-theme="cyber-violet"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.22) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="cyber-violet"] .tactile-round-btn.running,
+[data-theme="cyber-violet"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.95),
+    0 4px 8px -0.5px rgba(0, 0, 0, 0.88),
+    0 8px 16px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 1px var(--theme-accent-color, #7969ef),
+    0 0 8px rgba(121, 105, 239, 0.4) !important;
 }
 
 [data-theme="cyber-violet"] .micro-actions {
@@ -2325,6 +2667,16 @@ body[data-theme="cyber-violet"] .kronos-bar {
   --text-dim: #5c685f;
   --accent-amber: #c29b62;
   --flap-tile-bg: #27382f;
+
+  /* Tactile Rotary Knob Physical Attributes */
+  --knob-body-top: #3a5245;
+  --knob-body-mid: #283a31;
+  --knob-body-bot: #19251f;
+  --knob-dish-bg: #1f2e26;
+  --knob-dish-light: rgba(237, 226, 207, 0.08);
+  --knob-dish-dark: rgba(5, 10, 8, 0.6);
+  --knob-rim-light: rgba(237, 226, 207, 0.32);
+  --knob-ambient-shadow: rgba(7, 12, 9, 0.8);
 }
 
 [data-theme="kyoto-matcha"] #kronos-dock-bar,
@@ -2408,8 +2760,32 @@ body[data-theme="kyoto-matcha"] .kronos-bar {
   stroke: var(--theme-accent-color, #c29b62) !important;
 }
 
-[data-theme="kyoto-matcha"] .axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #c29b62) !important;
+[data-theme="kyoto-matcha"] .tactile-round-btn,
+[data-theme="kyoto-matcha"] .axial-plunger-btn,
+[data-theme="kyoto-matcha"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.88),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.78),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.78) !important;
+}
+[data-theme="kyoto-matcha"] .tactile-round-btn .btn-face,
+[data-theme="kyoto-matcha"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.18) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="kyoto-matcha"] .tactile-round-btn.running,
+[data-theme="kyoto-matcha"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.88),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.78),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.78),
+    inset 0 0 0 1px var(--theme-accent-color, #c29b62) !important;
 }
 
 [data-theme="kyoto-matcha"] .micro-actions {
@@ -2444,6 +2820,16 @@ body[data-theme="kyoto-matcha"] .kronos-bar {
   --text-dim: #4d5c70;
   --accent-amber: #ff6b18;
   --flap-tile-bg: #1c7ed6;
+
+  /* Tactile Rotary Knob Physical Attributes */
+  --knob-body-top: #2b4363;
+  --knob-body-mid: #1d2e46;
+  --knob-body-bot: #101c2c;
+  --knob-dish-bg: #152438;
+  --knob-dish-light: rgba(255, 255, 255, 0.1);
+  --knob-dish-dark: rgba(2, 6, 12, 0.65);
+  --knob-rim-light: rgba(255, 255, 255, 0.4);
+  --knob-ambient-shadow: rgba(1, 6, 13, 0.88);
 }
 
 [data-theme="cobalt-runner"] #kronos-dock-bar,
@@ -2527,8 +2913,32 @@ body[data-theme="cobalt-runner"] .kronos-bar {
   stroke: var(--theme-accent-color, #ff6b18) !important;
 }
 
-[data-theme="cobalt-runner"] .axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #ff6b18) !important;
+[data-theme="cobalt-runner"] .tactile-round-btn,
+[data-theme="cobalt-runner"] .axial-plunger-btn,
+[data-theme="cobalt-runner"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.9),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.8),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.8) !important;
+}
+[data-theme="cobalt-runner"] .tactile-round-btn .btn-face,
+[data-theme="cobalt-runner"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.18) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="cobalt-runner"] .tactile-round-btn.running,
+[data-theme="cobalt-runner"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.9),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.8),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px var(--theme-accent-color, #ff6b18) !important;
 }
 
 [data-theme="cobalt-runner"] .micro-actions {
@@ -2563,6 +2973,16 @@ body[data-theme="cobalt-runner"] .kronos-bar {
   --text-dim: #52525c;
   --accent-amber: #f59f00;
   --flap-tile-bg: #f59f00;
+
+  /* Tactile Rotary Knob Physical Attributes (Solar Ochre: Precision Bauhaus Warm Graphite & Amber) */
+  --knob-body-top: #38342c;
+  --knob-body-mid: #25221d;
+  --knob-body-bot: #14120f;
+  --knob-dish-bg: #1c1914;
+  --knob-dish-light: rgba(245, 159, 0, 0.16);
+  --knob-dish-dark: rgba(5, 4, 3, 0.72);
+  --knob-rim-light: rgba(255, 214, 128, 0.38);
+  --knob-ambient-shadow: rgba(0, 0, 0, 0.9);
 }
 
 [data-theme="solar-ochre"] #kronos-dock-bar,
@@ -2647,8 +3067,32 @@ body[data-theme="solar-ochre"] .kronos-bar {
   stroke: var(--theme-accent-color, #f59f00) !important;
 }
 
-[data-theme="solar-ochre"] .axial-plunger-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 45%, rgba(0, 0, 0, 0.15) 100%), var(--theme-accent-color, #f59f00) !important;
+[data-theme="solar-ochre"] .tactile-round-btn,
+[data-theme="solar-ochre"] .axial-plunger-btn,
+[data-theme="solar-ochre"] #kronos-toggle-btn {
+  background: linear-gradient(180deg, var(--knob-body-top) 0%, var(--knob-body-mid) 50%, var(--knob-body-bot) 100%) !important;
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.9),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.8),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.8) !important;
+}
+[data-theme="solar-ochre"] .tactile-round-btn .btn-face,
+[data-theme="solar-ochre"] .axial-plunger-btn .btn-face {
+  background: radial-gradient(circle at 50% 36%, var(--knob-dish-light) 0%, rgba(0, 0, 0, 0.22) 58%, var(--knob-dish-dark) 100%), var(--knob-dish-bg) !important;
+}
+[data-theme="solar-ochre"] .tactile-round-btn.running,
+[data-theme="solar-ochre"] .axial-plunger-btn.running {
+  box-shadow: 
+    0 1.5px 2.5px rgba(0, 0, 0, 0.9),
+    0 4px 7.5px -0.5px rgba(0, 0, 0, 0.8),
+    0 7.5px 14px -1px var(--knob-ambient-shadow),
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0.8px var(--knob-rim-light),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px var(--theme-accent-color, #f59f00) !important;
 }
 
 [data-theme="solar-ochre"] .micro-actions {
