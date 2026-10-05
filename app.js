@@ -648,8 +648,8 @@
   }
 
   function renderTimer(skipAnim = false) {
-    const minutes = isOvertime ? Math.floor(overtimeSeconds / 60) : Math.floor(remainingSeconds / 60);
-    const seconds = isOvertime ? (overtimeSeconds % 60) : (remainingSeconds % 60);
+    const minutes = isOvertime ? Math.min(99, Math.floor(overtimeSeconds / 60)) : Math.floor(remainingSeconds / 60);
+    const seconds = isOvertime ? Math.min(59, overtimeSeconds % 60) : (remainingSeconds % 60);
 
     const mStr = String(minutes).padStart(2, '0');
     const sStr = String(seconds).padStart(2, '0');
@@ -777,8 +777,13 @@
       } else {
         // Counting UP in elapsed overtime
         overtimeSeconds++;
-        renderTimer();
-        playTickSound();
+        if (overtimeSeconds >= (99 * 60 + 59)) {
+          // Absolute 4-digit ceiling reached (99m 59s) -> trigger completion chime, save with overtime, and stop!
+          completeInterval();
+        } else {
+          renderTimer();
+          playTickSound();
+        }
       }
     }, 1000);
   }

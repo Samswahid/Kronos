@@ -598,9 +598,11 @@
 
           const resumePayload = {
             id: session.id,
+            activeSessionId: session.id,
             title: session.title,
             phase: session.phase || 'focus',
             durationMin: session.durationMin || 25,
+            activeSessionPreviousDurationMin: session.durationMin || 0,
             lap: lapNum,
             currentLap: lapNum,
             tags: session.tags || [],
@@ -610,6 +612,8 @@
           // 1. Direct active state persistence with auto-start signal
           if (window.KronosStorage) {
             window.KronosStorage.saveActiveState({
+              activeSessionId: session.id,
+              activeSessionPreviousDurationMin: session.durationMin || 0,
               remainingSeconds: (session.durationMin || 25) * 60,
               totalSeconds: (session.durationMin || 25) * 60,
               initialPhaseSeconds: (session.durationMin || 25) * 60,

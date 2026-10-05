@@ -31,6 +31,8 @@
   let timerInterval = null;
   let activeSessionTitle = null;
   let activeSessionTags = [];
+  let activeSessionId = null;
+  let activeSessionPreviousDurationMin = 0;
   let lastProcessedResumeId = 0;
 
   const COLOR_KEY_TO_VAR = {
@@ -84,6 +86,9 @@
     overtimeSeconds = 0;
     const overflowBadge = document.getElementById('kronos-overflow-badge');
     if (overflowBadge) overflowBadge.classList.remove('active');
+
+    activeSessionId = payload.activeSessionId || payload.id || null;
+    activeSessionPreviousDurationMin = parseInt(payload.activeSessionPreviousDurationMin || payload.durationMin, 10) || 0;
 
     currentPhase = payload.phase || 'focus';
     let lap = 1;
@@ -595,8 +600,8 @@
   }
 
   function renderTimer(skipAnim = false) {
-    const minutes = isOvertime ? Math.floor(overtimeSeconds / 60) : Math.floor(remainingSeconds / 60);
-    const seconds = isOvertime ? (overtimeSeconds % 60) : (remainingSeconds % 60);
+    const minutes = isOvertime ? Math.min(99, Math.floor(overtimeSeconds / 60)) : Math.floor(remainingSeconds / 60);
+    const seconds = isOvertime ? Math.min(59, overtimeSeconds % 60) : (remainingSeconds % 60);
 
     const mStr = String(minutes).padStart(2, '0');
     const sStr = String(seconds).padStart(2, '0');
@@ -701,6 +706,8 @@
     if (!window.KronosStorage) return;
     try {
       window.KronosStorage.saveActiveState({
+        activeSessionId: activeSessionId,
+        activeSessionPreviousDurationMin: activeSessionPreviousDurationMin,
         remainingSeconds: remainingSeconds,
         totalSeconds: totalSeconds,
         initialPhaseSeconds: initialPhaseSeconds,
@@ -723,6 +730,8 @@
       if (!saved) return false;
 
       if ((typeof saved.remainingSeconds === 'number' && saved.remainingSeconds > 0) || saved.isOvertime) {
+        activeSessionId = saved.activeSessionId || null;
+        activeSessionPreviousDurationMin = parseInt(saved.activeSessionPreviousDurationMin, 10) || 0;
         currentPhase = saved.currentPhase || 'focus';
         currentLap = Math.min(5, Math.max(1, saved.currentLap || 1));
         totalSeconds = saved.totalSeconds || (config.focusDurationMin * 60);
@@ -781,9 +790,14 @@
       } else {
         // Counting UP in elapsed overtime
         overtimeSeconds++;
-        renderTimer();
-        playTickSound();
-        persistActiveState();
+        if (overtimeSeconds >= (99 * 60 + 59)) {
+          // Absolute 4-digit ceiling reached (99m 59s) -> trigger completion chime, save with overtime, and stop!
+          completeInterval();
+        } else {
+          renderTimer();
+          playTickSound();
+          persistActiveState();
+        }
       }
     }, 1000);
   }
@@ -852,6 +866,8 @@
     const recordedLap = (typeof sessionLap === 'number') ? sessionLap : currentLap;
     const customTitle = activeSessionTitle;
     const customTags = (activeSessionTags && activeSessionTags.length > 0) ? activeSessionTags.slice() : [];
+    const resumingId = activeSessionId;
+    const prevDuration = activeSessionPreviousDurationMin;
 
     getAEProjectName(function (projectName) {
       const proj = projectName || "Untitled Project";
@@ -860,20 +876,47 @@
       const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-      const newSession = {
-        id: "sess-" + Date.now(),
-        date: dateFormatted,
-        startTime: timeFormatted,
-        durationMin: durationMin,
-        phase: phase,
-        title: title,
-        tags: customTags,
-        completed: true
-      };
-
-      if (window.KronosStorage) {
-        window.KronosStorage.addSession(newSession);
+      if (resumingId && window.KronosStorage) {
+        // Resumed session: update the existing session with additional time rather than creating duplicate
+        const sessions = window.KronosStorage.getSessions();
+        const existing = sessions.find(s => s.id === resumingId);
+        if (existing) {
+          existing.durationMin = (parseInt(existing.durationMin, 10) || prevDuration) + durationMin;
+          if (customTitle) existing.title = customTitle;
+          if (customTags.length > 0) existing.tags = customTags;
+          existing.completed = true;
+          window.KronosStorage.saveSessions(sessions);
+        } else {
+          const newSession = {
+            id: "sess-" + Date.now(),
+            date: dateFormatted,
+            startTime: timeFormatted,
+            durationMin: prevDuration + durationMin,
+            phase: phase,
+            title: title,
+            tags: customTags,
+            completed: true
+          };
+          window.KronosStorage.addSession(newSession);
+        }
+      } else {
+        const newSession = {
+          id: "sess-" + Date.now(),
+          date: dateFormatted,
+          startTime: timeFormatted,
+          durationMin: durationMin,
+          phase: phase,
+          title: title,
+          tags: customTags,
+          completed: true
+        };
+        if (window.KronosStorage) {
+          window.KronosStorage.addSession(newSession);
+        }
       }
+
+      activeSessionId = null;
+      activeSessionPreviousDurationMin = 0;
       activeSessionTitle = null;
       activeSessionTags = [];
       persistActiveState();
