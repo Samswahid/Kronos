@@ -95,7 +95,7 @@
                 <!-- ZONE A: Modular Squircle Rotary & Inset Lap Channel -->
                 <div class="kronos-zone zone-left">
                   <!-- Modular Squircle Rotary (Settings Launcher) -->
-                  <button id="kronos-crown-btn" class="squircle-modular-trigger" aria-label="Open Session Vault" title="Open Session Vault">
+                  <button id="kronos-crown-btn" class="squircle-modular-trigger" aria-label="Open Session Vault">
                     <span class="squircle-bolt tl"></span>
                     <span class="squircle-bolt tr"></span>
                     <span class="squircle-bolt bl"></span>
@@ -122,8 +122,8 @@
                   <!-- Redesigned Industrial 3-Way Mode Switcher -->
                   <div class="mode-selector-strip" id="mode-selector-strip">
                     <button class="mode-tab-btn active" data-mode="focus">FOCUS</button>
-                    <button class="mode-tab-btn" data-mode="short_break">SHORT</button>
-                    <button class="mode-tab-btn" data-mode="long_break">LONG</button>
+                    <button class="mode-tab-btn" data-mode="short_break">DEEP</button>
+                    <button class="mode-tab-btn" data-mode="long_break">FLOW</button>
                   </div>
 
                   <!-- Mechanical Split-Flap Clock Display -->
@@ -184,7 +184,7 @@
                     </svg>
 
                     <!-- Tactile Push-Button Trigger -->
-                    <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer" title="Start or Pause Timer">
+                    <button id="kronos-toggle-btn" class="tactile-round-btn play-pause-trigger" aria-label="Start or Pause Timer">
                       <span class="btn-face">
                         <!-- Play Icon (shown when stopped) — soft-cornered, optically centred (centroid on 12,12) -->
                         <svg class="icon-glyph glyph-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
@@ -201,13 +201,13 @@
 
                   <!-- Micro Actions (Borderless, Zero-Background, Ample Clearance) -->
                   <div class="micro-actions">
-                    <button id="kronos-skip-btn" class="micro-icon-btn" aria-label="Complete or Skip Lap" title="Skip Lap">
+                    <button id="kronos-skip-btn" class="micro-icon-btn" aria-label="Complete or Skip Lap">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="5 4 15 12 5 20 5 4"></polygon>
                         <line x1="19" y1="5" x2="19" y2="19"></line>
                       </svg>
                     </button>
-                    <button id="kronos-reset-btn" class="micro-icon-btn" aria-label="Reset Timer (Ctrl+Click to Reset Lap)" title="Reset Timer (Ctrl+Click to Reset Lap)">
+                    <button id="kronos-reset-btn" class="micro-icon-btn" aria-label="Reset Timer (Ctrl+Click to Reset Lap)">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
                         <path d="M3 3v5h5"></path>
@@ -650,15 +650,11 @@
             <span>Time Export:</span>
           </div>
           <div class="export-btn-group">
-            <button id="btn-export-csv" class="vault-export-btn" aria-label="Export CSV">
-              CSV
-            </button>
-            <button id="btn-export-json" class="vault-export-btn" aria-label="Export JSON">
-              JSON
-            </button>
-            <button id="btn-copy-summary" class="vault-export-btn" aria-label="Copy Summary">
-              Copy Summary
-            </button>
+            <button id="btn-export-csv" class="vault-export-btn" aria-label="Export CSV">CSV</button>
+            <button id="btn-export-json" class="vault-export-btn" aria-label="Export JSON">JSON</button>
+            <button id="btn-import-json" class="vault-export-btn" aria-label="Restore Sessions JSON">Restore JSON</button>
+            <input type="file" id="input-import-json" accept=".json" style="display: none;">
+            <button id="btn-copy-summary" class="vault-export-btn" aria-label="Copy Summary">Copy Summary</button>
           </div>
         </div>
       </div>
@@ -702,37 +698,37 @@
             <div class="group-title">TIMER INTERVALS (MINUTES)</div>
             
             <div class="pref-row">
-              <label for="pref-focus-dur">Focus Duration</label>
+              <label for="pref-focus-dur">Focus Duration (min)</label>
               <div class="stepper-input">
                 <button class="step-btn" data-step="pref-focus-dur" data-val="-1">－</button>
-                <input type="number" id="pref-focus-dur" value="25" min="1" max="120">
+                <input type="number" id="pref-focus-dur" value="25" min="1" max="90">
                 <button class="step-btn" data-step="pref-focus-dur" data-val="1">＋</button>
               </div>
             </div>
 
             <div class="pref-row">
-              <label for="pref-short-break">Short Break Duration</label>
+              <label for="pref-short-break">Deep Focus Duration (min)</label>
               <div class="stepper-input">
                 <button class="step-btn" data-step="pref-short-break" data-val="-1">－</button>
-                <input type="number" id="pref-short-break" value="5" min="1" max="60">
+                <input type="number" id="pref-short-break" value="50" min="1" max="90">
                 <button class="step-btn" data-step="pref-short-break" data-val="1">＋</button>
               </div>
             </div>
 
             <div class="pref-row">
-              <label for="pref-long-break">Long Break Duration</label>
+              <label for="pref-long-break">Flow State Duration (min)</label>
               <div class="stepper-input">
                 <button class="step-btn" data-step="pref-long-break" data-val="-1">－</button>
-                <input type="number" id="pref-long-break" value="15" min="1" max="90">
+                <input type="number" id="pref-long-break" value="90" min="1" max="90">
                 <button class="step-btn" data-step="pref-long-break" data-val="1">＋</button>
               </div>
             </div>
 
             <div class="pref-row">
-              <label for="pref-laps-cycle">Laps per Long Cycle</label>
+              <label for="pref-laps-cycle">Laps per Cycle (Max 5)</label>
               <div class="stepper-input">
                 <button class="step-btn" data-step="pref-laps-cycle" data-val="-1">－</button>
-                <input type="number" id="pref-laps-cycle" value="4" min="2" max="10">
+                <input type="number" id="pref-laps-cycle" value="4" min="1" max="5">
                 <button class="step-btn" data-step="pref-laps-cycle" data-val="1">＋</button>
               </div>
             </div>
@@ -740,6 +736,23 @@
 
           <div class="pref-group">
             <div class="group-title">TACTILE AUDIO SYNTHESIS</div>
+            <div class="pref-row">
+              <label for="pref-volume">Sound Volume</label>
+              <div class="volume-control-box">
+                <input type="range" id="pref-volume" min="0" max="100" value="80" class="pref-slider">
+                <span id="pref-volume-val" class="volume-val">80%</span>
+              </div>
+            </div>
+            <div class="pref-row">
+              <label for="pref-audio-profile">Sound Style</label>
+              <select id="pref-audio-profile" class="pref-select">
+                <option value="mechanical">Tactile Mechanical Switch</option>
+                <option value="braun_thud">Braun Analog Thud (1972)</option>
+                <option value="vintage_bell">Vintage Studio Bell</option>
+                <option value="digital_quartz">Digital Quartz Chrono</option>
+                <option value="zen_gong">Zen Singing Bowl</option>
+              </select>
+            </div>
             <div class="pref-row">
               <label for="pref-sound-effects">Mechanical Switch Clicks</label>
               <input type="checkbox" id="pref-sound-effects" checked class="pref-toggle">

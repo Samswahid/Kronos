@@ -1193,6 +1193,182 @@ html, body {
   background: var(--bg-input);
 }
 
+.card-duration-edit {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-input);
+  padding: 1.5px 5px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.card-duration-edit.focus {
+  color: var(--accent-amber);
+}
+
+.session-duration-input {
+  width: 22px;
+  background: transparent;
+  border: none !important;
+  outline: none !important;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  text-align: right;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.session-duration-input::-webkit-outer-spin-button,
+.session-duration-input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+.card-duration-unit {
+  font-size: 8.5px;
+  opacity: 0.85;
+  letter-spacing: 0.04em;
+}
+
+/* Session Tags Strip & Resume */
+.card-tags-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.tags-scroll-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  padding: 1.5px 5px;
+  font-family: var(--font-sans);
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--text-body);
+  letter-spacing: 0.02em;
+  transition: all 100ms ease;
+}
+
+.tag-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-active);
+}
+
+.tag-name-edit {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  padding: 0;
+  max-width: 90px;
+}
+
+.tag-del-btn {
+  background: transparent;
+  border: none !important;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 1px;
+  font-size: 10px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tag-del-btn:hover {
+  color: #ef4444;
+}
+
+.add-tag-btn {
+  background: transparent;
+  border: 1px dashed #3a3a3e !important;
+  color: var(--text-dim);
+  border-radius: 2px;
+  padding: 1px 5px;
+  font-family: var(--font-sans);
+  font-size: 8.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.add-tag-btn:hover {
+  border-color: var(--accent-amber) !important;
+  color: var(--accent-amber);
+}
+
+.tag-inline-input {
+  width: 55px;
+  background: var(--bg-input);
+  border: 1px solid var(--accent-amber) !important;
+  border-radius: 2px;
+  color: var(--text-active);
+  font-family: var(--font-sans);
+  font-size: 8.5px;
+  padding: 1px 4px;
+  outline: none;
+}
+
+.card-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: 1px solid #333338 !important;
+  color: var(--accent-amber);
+  border-radius: 2px;
+  padding: 1.5px 6px;
+  font-family: var(--font-grotesk);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.card-resume-btn:hover {
+  background: var(--accent-amber);
+  color: #121212;
+  border-color: var(--accent-amber) !important;
+}
+
+.pref-select {
+  background: var(--bg-input);
+  color: var(--text-active);
+  border: 1px solid #333338 !important;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  padding: 3px 6px;
+  outline: none;
+  cursor: pointer;
+}
+
 .vault-footer-export {
   padding: 8px 12px;
   background: var(--bg-panel);
@@ -1259,6 +1435,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .card-title {
@@ -1266,20 +1444,26 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-sub {
   font-size: 9.5px;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
-/* Interactive Timeframe Segment Control */
+/* Interactive Timeframe Segment Control — Stable, Permanent Fixed Layout */
 .timeframe-group {
   display: flex;
   background: var(--bg-input);
   border-radius: 4px;
   padding: 2px;
   gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .tf-btn {
@@ -1289,11 +1473,14 @@ html, body {
   font-family: var(--font-sans);
   font-size: 9px;
   font-weight: 600;
-  padding: 3px 7px;
+  padding: 3px 0;
+  width: 50px;
+  text-align: center;
   border-radius: 3px;
   cursor: pointer;
-  transition: all 120ms ease;
+  transition: none !important;
   line-height: 1;
+  box-sizing: border-box;
 }
 
 .tf-btn:hover {
@@ -1303,7 +1490,7 @@ html, body {
 .tf-btn.active {
   background: var(--accent-amber);
   color: #121212;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Dynamic Bar Chart */
@@ -1521,6 +1708,63 @@ html, body {
   font-weight: 600;
   text-align: center;
   outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.stepper-input input::-webkit-outer-spin-button,
+.stepper-input input::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.volume-control-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pref-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100px;
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.pref-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  cursor: pointer;
+  transition: transform 80ms ease;
+  border: none;
+}
+
+.pref-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.volume-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 32px;
+  text-align: right;
 }
 
 .pref-toggle {

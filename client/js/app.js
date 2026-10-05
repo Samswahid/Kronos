@@ -26,6 +26,8 @@
   let totalSeconds = config.focusDurationMin * 60;
   let remainingSeconds = totalSeconds;
   let timerInterval = null;
+  let activeSessionTitle = null;
+  let activeSessionTags = [];
 
   const COLOR_KEY_TO_VAR = {
     clockBg: '--theme-clock-bg',
@@ -74,12 +76,32 @@
   // Listen for preference, theme, or session updates from floating window
   if (window.KronosStorage && window.KronosStorage.onSync) {
     window.KronosStorage.onSync(function (payload) {
-      if (payload) {
-        config = window.KronosStorage.getPrefs();
-        if (payload.theme || payload.themeId || payload.type === 'theme' || payload.type === 'theme_color' || payload.type === 'theme_reset' || payload.colors) {
-          const targetTheme = payload.themeId || payload.theme || config.theme;
-          applyTheme(targetTheme, payload.colors);
-        }
+      if (!payload) return;
+      config = window.KronosStorage.getPrefs();
+
+      if (payload.type === 'resume_session') {
+        pauseTimer();
+        currentPhase = payload.phase || 'focus';
+        const dur = Math.min(90, Math.max(1, parseInt(payload.durationMin, 10) || config.focusDurationMin || 25));
+        totalSeconds = dur * 60;
+        remainingSeconds = totalSeconds;
+        activeSessionTitle = payload.title || null;
+        activeSessionTags = Array.isArray(payload.tags) ? payload.tags.slice() : [];
+        modeTabBtns.forEach(btn => {
+          if (btn.dataset.mode === currentPhase) btn.classList.add('active');
+          else btn.classList.remove('active');
+        });
+        renderLapPips();
+        renderTimer(true);
+        startTimer();
+        persistActiveState();
+      } else if (payload.type === 'audio_profile' || payload.profile) {
+        if (config) config.audioProfile = payload.profile || config.audioProfile;
+        playMechanicalClick('press');
+      } else if (payload.theme || payload.themeId || payload.type === 'theme' || payload.type === 'theme_color' || payload.type === 'theme_reset' || payload.colors) {
+        const targetTheme = payload.themeId || payload.theme || config.theme;
+        applyTheme(targetTheme, payload.colors);
+      } else {
         if (!isRunning) {
           setPhase(currentPhase);
         } else {
@@ -128,33 +150,134 @@
     }
   }
 
+  function getVolumeMultiplier() {
+    const vol = (config && typeof config.volume === 'number') ? config.volume : 80;
+    return Math.max(0, Math.min(1, vol / 100));
+  }
+
+  function getAudioProfile() {
+    return (config && config.audioProfile) ? config.audioProfile : 'mechanical';
+  }
+
   function playMechanicalClick(type = 'press') {
     if (!config.soundEffects) return;
     try {
       initAudio();
       if (!audioCtx) return;
 
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const filter = audioCtx.createBiquadFilter();
+      const profile = getAudioProfile();
+      const vMul = getVolumeMultiplier();
+      if (vMul <= 0) return;
 
-      filter.type = 'bandpass';
-      filter.frequency.value = type === 'press' ? 1800 : 2400;
-      filter.Q.value = 4.0;
+      const now = audioCtx.currentTime;
 
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(type === 'press' ? 320 : 540, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.035);
+      if (profile === 'braun_thud') {
+        // Dieter Rams 1972 Damped Tactile Switch Thud
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
 
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(type === 'press' ? 420 : 520, now);
+        filter.Q.value = 1.2;
 
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(type === 'press' ? 170 : 220, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.04);
 
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.45 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.04);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.045);
+      } else if (profile === 'vintage_bell') {
+        // Studio Brass Desk Bell Tap
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(type === 'press' ? 1480 : 1760, now);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(type === 'press' ? 2960 : 3520, now);
+
+        gain.gain.setValueAtTime(0.22 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.07);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.075);
+        osc2.stop(now + 0.075);
+      } else if (profile === 'digital_quartz') {
+        // Precision Quartz Watch Pip
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(type === 'press' ? 2400 : 3200, now);
+
+        gain.gain.setValueAtTime(0.12 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.015);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.018);
+      } else if (profile === 'zen_gong') {
+        // Singing Bowl / Wooden Temple Block Strike
+        const osc = audioCtx.createOscillator();
+        const harmonic = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(type === 'press' ? 432 : 540, now);
+        harmonic.type = 'sine';
+        harmonic.frequency.setValueAtTime(type === 'press' ? 864 : 1080, now);
+
+        gain.gain.setValueAtTime(0.28 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.06);
+
+        osc.connect(gain);
+        harmonic.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        harmonic.start(now);
+        osc.stop(now + 0.065);
+        harmonic.stop(now + 0.065);
+      } else {
+        // Default: Tactile Mechanical Switch Click
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = 'bandpass';
+        filter.frequency.value = type === 'press' ? 1800 : 2400;
+        filter.Q.value = 4.0;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(type === 'press' ? 320 : 540, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.035);
+
+        gain.gain.setValueAtTime(0.35 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.035);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
     } catch (e) { }
   }
 
@@ -164,25 +287,124 @@
       initAudio();
       if (!audioCtx) return;
 
-      const freqs = [523.25, 659.25, 783.99, 1046.50];
-      freqs.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
+      const profile = getAudioProfile();
+      const vMul = getVolumeMultiplier();
+      if (vMul <= 0) return;
 
-        const startTime = audioCtx.currentTime + idx * 0.08;
-        const duration = 1.2;
+      const now = audioCtx.currentTime;
 
-        gain.gain.setValueAtTime(0.15, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      if (profile === 'braun_thud') {
+        // Warm Braun ET66 Dual Harmonic Chime (A4 - C#5)
+        const tones = [440.0, 554.37];
+        tones.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const filter = audioCtx.createBiquadFilter();
 
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+          filter.type = 'lowpass';
+          filter.frequency.value = 1400;
 
-        osc.start(startTime);
-        osc.stop(startTime + duration + 0.1);
-      });
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+
+          const start = now + idx * 0.12;
+          const dur = 1.4;
+
+          gain.gain.setValueAtTime(0.24 * vMul, start);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, start + dur);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(start);
+          osc.stop(start + dur + 0.1);
+        });
+      } else if (profile === 'vintage_bell') {
+        // Resonant Studio Brass Bell with Harmonics
+        const partials = [
+          { f: 880.0, g: 0.22, d: 2.2 },
+          { f: 1760.0, g: 0.14, d: 1.8 },
+          { f: 2640.0, g: 0.08, d: 1.2 }
+        ];
+        partials.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = p.f;
+
+          gain.gain.setValueAtTime(p.g * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + p.d);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + p.d + 0.1);
+        });
+      } else if (profile === 'digital_quartz') {
+        // Iconic Double Quartz Chrono Pulse
+        [0.0, 0.13].forEach(offset => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = 2048;
+
+          const start = now + offset;
+          gain.gain.setValueAtTime(0.14 * vMul, start);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, start + 0.08);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(start);
+          osc.stop(start + 0.085);
+        });
+      } else if (profile === 'zen_gong') {
+        // Deep Resonant Tibetan Singing Bowl / Gong
+        const partials = [
+          { f: 216.0, g: 0.30, d: 3.2 },
+          { f: 432.0, g: 0.18, d: 2.8 },
+          { f: 648.0, g: 0.09, d: 2.0 }
+        ];
+        partials.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = p.f;
+
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(p.g * vMul, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + p.d);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + p.d + 0.1);
+        });
+      } else {
+        // Default: 4-tone Ascending Industrial Arpeggio
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+
+          const startTime = now + idx * 0.08;
+          const duration = 1.2;
+
+          gain.gain.setValueAtTime(0.18 * vMul, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, startTime + duration);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + duration + 0.1);
+        });
+      }
     } catch (e) { }
   }
 
@@ -192,17 +414,45 @@
       initAudio();
       if (!audioCtx) return;
 
+      const profile = getAudioProfile();
+      const vMul = getVolumeMultiplier();
+      if (vMul <= 0) return;
+
+      const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(1100, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.01);
+
+      if (profile === 'braun_thud') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, now);
+        gain.gain.setValueAtTime(0.03 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.016);
+      } else if (profile === 'vintage_bell') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1760, now);
+        gain.gain.setValueAtTime(0.015 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.014);
+      } else if (profile === 'digital_quartz') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(2048, now);
+        gain.gain.setValueAtTime(0.012 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.008);
+      } else if (profile === 'zen_gong') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        gain.gain.setValueAtTime(0.02 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.02);
+      } else {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1100, now);
+        gain.gain.setValueAtTime(0.02 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.01);
+      }
 
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.012);
+      osc.start(now);
+      osc.stop(now + 0.022);
     } catch (e) { }
   }
 
@@ -328,6 +578,7 @@
     remainingSeconds = totalSeconds;
     renderLapPips();
     renderTimer(true);
+    persistActiveState();
   }
 
   function renderLapPips() {
@@ -363,6 +614,56 @@
     }
   }
 
+  function persistActiveState() {
+    if (!window.KronosStorage) return;
+    try {
+      window.KronosStorage.saveActiveState({
+        remainingSeconds: remainingSeconds,
+        totalSeconds: totalSeconds,
+        currentPhase: currentPhase,
+        currentLap: currentLap,
+        isRunning: isRunning,
+        activeSessionTitle: activeSessionTitle,
+        activeSessionTags: activeSessionTags,
+        lastTimestamp: Date.now()
+      });
+    } catch (e) {}
+  }
+
+  function recoverActiveState() {
+    if (!window.KronosStorage) return false;
+    try {
+      const saved = window.KronosStorage.getActiveState();
+      if (!saved) return false;
+
+      if (typeof saved.remainingSeconds === 'number' && saved.remainingSeconds > 0) {
+        currentPhase = saved.currentPhase || 'focus';
+        currentLap = Math.min(5, Math.max(1, saved.currentLap || 1));
+        totalSeconds = saved.totalSeconds || (config.focusDurationMin * 60);
+        remainingSeconds = Math.min(totalSeconds, Math.max(0, saved.remainingSeconds));
+        activeSessionTitle = saved.activeSessionTitle || null;
+        activeSessionTags = Array.isArray(saved.activeSessionTags) ? saved.activeSessionTags : [];
+
+        modeTabBtns.forEach(btn => {
+          if (btn.dataset.mode === currentPhase) btn.classList.add('active');
+          else btn.classList.remove('active');
+        });
+
+        renderLapPips();
+        renderTimer(true);
+        // Safely start paused so user has full control
+        isRunning = false;
+        toggleBtn.classList.remove('running');
+        playGlyph.style.display = 'block';
+        pauseGlyph.style.display = 'none';
+        return true;
+      }
+    } catch (e) {
+      console.warn("[Kronos] State recovery error:", e);
+    }
+    return false;
+  }
+
   function startTimer() {
     if (isRunning) return;
     initAudio();
@@ -371,12 +672,14 @@
     toggleBtn.classList.add('running');
     playGlyph.style.display = 'none';
     pauseGlyph.style.display = 'block';
+    persistActiveState();
 
     timerInterval = setInterval(() => {
       if (remainingSeconds > 0) {
         remainingSeconds--;
         renderTimer();
         playTickSound();
+        persistActiveState();
       } else {
         completeInterval();
       }
@@ -394,6 +697,7 @@
       clearInterval(timerInterval);
       timerInterval = null;
     }
+    persistActiveState();
   }
 
   function resetCurrentTimer(e) {
@@ -405,26 +709,49 @@
       renderLapPips();
     }
     renderTimer(true);
+    persistActiveState();
   }
 
   function getAEProjectName(callback) {
+    let resolved = false;
+    const safeCallback = function (name) {
+      if (resolved) return;
+      resolved = true;
+      callback(name);
+    };
+
+    const timer = setTimeout(function () {
+      safeCallback("Untitled Project");
+    }, 400);
+
     if (csInterface && csInterface.evalScript) {
-      csInterface.evalScript("$.global.kronos.getProjectName()", function (res) {
-        if (res && res !== 'undefined' && res !== 'null' && res.trim().length > 0) {
-          callback(res.trim());
-        } else {
-          callback("Untitled Project");
-        }
-      });
+      try {
+        csInterface.evalScript("$.global.kronos.getProjectName()", function (res) {
+          clearTimeout(timer);
+          if (res && res !== 'undefined' && res !== 'null' && res.trim().length > 0) {
+            safeCallback(res.trim());
+          } else {
+            safeCallback("Untitled Project");
+          }
+        });
+      } catch (err) {
+        clearTimeout(timer);
+        safeCallback("Untitled Project");
+      }
     } else {
-      callback("Untitled Project");
+      clearTimeout(timer);
+      safeCallback("Untitled Project");
     }
   }
 
-  function logCompletedSession(durationMin, phase, fallbackTitle) {
+  function logCompletedSession(durationMin, phase, sessionLap) {
+    const recordedLap = (typeof sessionLap === 'number') ? sessionLap : currentLap;
+    const customTitle = activeSessionTitle;
+    const customTags = (activeSessionTags && activeSessionTags.length > 0) ? activeSessionTags.slice() : [];
+
     getAEProjectName(function (projectName) {
       const proj = projectName || "Untitled Project";
-      const title = `${proj} • Lap ${currentLap}`;
+      const title = customTitle || `${proj} • Lap ${recordedLap}`;
       const now = new Date();
       const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -436,12 +763,16 @@
         durationMin: durationMin,
         phase: phase,
         title: title,
+        tags: customTags,
         completed: true
       };
 
       if (window.KronosStorage) {
         window.KronosStorage.addSession(newSession);
       }
+      activeSessionTitle = null;
+      activeSessionTags = [];
+      persistActiveState();
     });
   }
 
@@ -450,7 +781,8 @@
     playAcousticChime();
 
     if (currentPhase === 'focus') {
-      logCompletedSession(config.focusDurationMin, 'focus', `Focus Lap ${currentLap}`);
+      const finishedLap = currentLap;
+      logCompletedSession(config.focusDurationMin, 'focus', finishedLap);
 
       const totalLaps = parseInt(config.lapsPerCycle, 10) || 4;
       if (currentLap >= totalLaps) {
@@ -464,6 +796,7 @@
       remainingSeconds = totalSeconds;
       renderLapPips();
       renderTimer(true);
+      persistActiveState();
     } else {
       currentPhase = 'focus';
       totalSeconds = config.focusDurationMin * 60;
@@ -474,6 +807,7 @@
       });
       renderLapPips();
       renderTimer(true);
+      persistActiveState();
     }
   }
 
@@ -483,7 +817,8 @@
 
     if (currentPhase === 'focus') {
       const elapsed = Math.max(1, Math.round((totalSeconds - remainingSeconds) / 60));
-      logCompletedSession(elapsed, 'focus', `Focus Lap ${currentLap}`);
+      const finishedLap = currentLap;
+      logCompletedSession(elapsed, 'focus', finishedLap);
 
       const totalLaps = parseInt(config.lapsPerCycle, 10) || 4;
       if (currentLap >= totalLaps) {
@@ -497,6 +832,7 @@
       remainingSeconds = totalSeconds;
       renderLapPips();
       renderTimer(true);
+      persistActiveState();
     } else {
       currentPhase = 'focus';
       totalSeconds = config.focusDurationMin * 60;
@@ -507,6 +843,7 @@
       });
       renderLapPips();
       renderTimer(true);
+      persistActiveState();
     }
   }
 
@@ -565,9 +902,22 @@
 
   function init() {
     applyTheme();
-    setPhase('focus');
+    const recovered = recoverActiveState();
+    if (!recovered) {
+      setPhase('focus');
+    }
     renderLapPips();
     setupEventListeners();
+
+    // Persist state on page unload
+    window.addEventListener('beforeunload', persistActiveState);
+
+    // Suppress all browser default tooltips
+    document.addEventListener('mouseover', function (e) {
+      if (e.target && e.target.hasAttribute && e.target.hasAttribute('title')) {
+        e.target.removeAttribute('title');
+      }
+    }, true);
   }
 
   if (document.readyState === 'loading') {

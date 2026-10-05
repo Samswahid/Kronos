@@ -49,7 +49,7 @@
       </div>
 
       <div class="vault-window-controls">
-        <button id="vault-sync-btn" class="vault-ctrl-btn sync" title="Sync Theme &amp; Colors to Dockable Panel" aria-label="Sync to Panel">
+        <button id="vault-sync-btn" class="vault-ctrl-btn sync" aria-label="Sync to Panel">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
@@ -88,7 +88,7 @@
         </div>
         <div class="themes-header-actions">
           <span class="themes-count-tag" id="current-theme-name-tag">Charcoal Flap</span>
-          <button id="btn-sync-theme-to-dock" class="theme-sync-dock-btn" title="Sync Theme &amp; Palette to Dockable Panel">
+          <button id="btn-sync-theme-to-dock" class="theme-sync-dock-btn" aria-label="Sync Theme &amp; Palette to Dockable Panel">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
             </svg>
@@ -445,15 +445,11 @@
           <span>Time Export:</span>
         </div>
         <div class="export-btn-group">
-          <button id="btn-export-csv" class="vault-export-btn" aria-label="Export CSV">
-            CSV
-          </button>
-          <button id="btn-export-json" class="vault-export-btn" aria-label="Export JSON">
-            JSON
-          </button>
-          <button id="btn-copy-summary" class="vault-export-btn" aria-label="Copy Summary">
-            Copy Summary
-          </button>
+          <button id="btn-export-csv" class="vault-export-btn" aria-label="Export CSV">CSV</button>
+          <button id="btn-export-json" class="vault-export-btn" aria-label="Export JSON">JSON</button>
+          <button id="btn-import-json" class="vault-export-btn" aria-label="Restore Sessions JSON">Restore JSON</button>
+          <input type="file" id="input-import-json" accept=".json" style="display: none;">
+          <button id="btn-copy-summary" class="vault-export-btn" aria-label="Copy Summary">Copy Summary</button>
         </div>
       </div>
     </div>
@@ -497,37 +493,37 @@
           <div class="group-title">TIMER INTERVALS (MINUTES)</div>
           
           <div class="pref-row">
-            <label for="pref-focus-dur">Focus Duration</label>
+            <label for="pref-focus-dur">Focus Duration (min)</label>
             <div class="stepper-input">
               <button class="step-btn" data-step="pref-focus-dur" data-val="-1">－</button>
-              <input type="number" id="pref-focus-dur" value="25" min="1" max="120">
+              <input type="number" id="pref-focus-dur" value="25" min="1" max="90">
               <button class="step-btn" data-step="pref-focus-dur" data-val="1">＋</button>
             </div>
           </div>
 
           <div class="pref-row">
-            <label for="pref-short-break">Short Break Duration</label>
+            <label for="pref-short-break">Deep Focus Duration (min)</label>
             <div class="stepper-input">
               <button class="step-btn" data-step="pref-short-break" data-val="-1">－</button>
-              <input type="number" id="pref-short-break" value="5" min="1" max="60">
+              <input type="number" id="pref-short-break" value="50" min="1" max="90">
               <button class="step-btn" data-step="pref-short-break" data-val="1">＋</button>
             </div>
           </div>
 
           <div class="pref-row">
-            <label for="pref-long-break">Long Break Duration</label>
+            <label for="pref-long-break">Flow State Duration (min)</label>
             <div class="stepper-input">
               <button class="step-btn" data-step="pref-long-break" data-val="-1">－</button>
-              <input type="number" id="pref-long-break" value="15" min="1" max="90">
+              <input type="number" id="pref-long-break" value="90" min="1" max="90">
               <button class="step-btn" data-step="pref-long-break" data-val="1">＋</button>
             </div>
           </div>
 
           <div class="pref-row">
-            <label for="pref-laps-cycle">Laps per Long Cycle</label>
+            <label for="pref-laps-cycle">Laps per Cycle (Max 5)</label>
             <div class="stepper-input">
               <button class="step-btn" data-step="pref-laps-cycle" data-val="-1">－</button>
-              <input type="number" id="pref-laps-cycle" value="4" min="2" max="10">
+              <input type="number" id="pref-laps-cycle" value="4" min="1" max="5">
               <button class="step-btn" data-step="pref-laps-cycle" data-val="1">＋</button>
             </div>
           </div>
@@ -535,6 +531,23 @@
 
         <div class="pref-group">
           <div class="group-title">TACTILE AUDIO SYNTHESIS</div>
+          <div class="pref-row">
+            <label for="pref-volume">Sound Volume</label>
+            <div class="volume-control-box">
+              <input type="range" id="pref-volume" min="0" max="100" value="80" class="pref-slider">
+              <span id="pref-volume-val" class="volume-val">80%</span>
+            </div>
+          </div>
+          <div class="pref-row">
+            <label for="pref-audio-profile">Sound Style</label>
+            <select id="pref-audio-profile" class="pref-select">
+              <option value="mechanical">Tactile Mechanical Switch</option>
+              <option value="braun_thud">Braun Analog Thud (1972)</option>
+              <option value="vintage_bell">Vintage Studio Bell</option>
+              <option value="digital_quartz">Digital Quartz Chrono</option>
+              <option value="zen_gong">Zen Singing Bowl</option>
+            </select>
+          </div>
           <div class="pref-row">
             <label for="pref-sound-effects">Mechanical Switch Clicks</label>
             <input type="checkbox" id="pref-sound-effects" checked class="pref-toggle">

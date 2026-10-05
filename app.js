@@ -230,33 +230,129 @@
     }
   }
 
+  function getVolumeMultiplier() {
+    const vol = (config && typeof config.volume === 'number') ? config.volume : 80;
+    return Math.max(0, Math.min(1, vol / 100));
+  }
+
+  function getAudioProfile() {
+    return (config && config.audioProfile) ? config.audioProfile : 'mechanical';
+  }
+
   function playMechanicalClick(type = 'press') {
     if (!config.soundEffects) return;
     try {
       initAudio();
       if (!audioCtx) return;
 
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const filter = audioCtx.createBiquadFilter();
+      const profile = getAudioProfile();
+      const vMul = getVolumeMultiplier();
+      if (vMul <= 0) return;
 
-      filter.type = 'bandpass';
-      filter.frequency.value = type === 'press' ? 1800 : 2400;
-      filter.Q.value = 4.0;
+      const now = audioCtx.currentTime;
 
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(type === 'press' ? 320 : 540, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.035);
+      if (profile === 'braun_thud') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
 
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(type === 'press' ? 420 : 520, now);
+        filter.Q.value = 1.2;
 
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(type === 'press' ? 170 : 220, now);
+        osc.frequency.exponentialRampToValueAtTime(45, now + 0.04);
 
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.45 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.04);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.045);
+      } else if (profile === 'vintage_bell') {
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(type === 'press' ? 1480 : 1760, now);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(type === 'press' ? 2960 : 3520, now);
+
+        gain.gain.setValueAtTime(0.22 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.07);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.075);
+        osc2.stop(now + 0.075);
+      } else if (profile === 'digital_quartz') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(type === 'press' ? 2400 : 3200, now);
+
+        gain.gain.setValueAtTime(0.12 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.015);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.018);
+      } else if (profile === 'zen_gong') {
+        const osc = audioCtx.createOscillator();
+        const harmonic = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(type === 'press' ? 432 : 540, now);
+        harmonic.type = 'sine';
+        harmonic.frequency.setValueAtTime(type === 'press' ? 864 : 1080, now);
+
+        gain.gain.setValueAtTime(0.28 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.06);
+
+        osc.connect(gain);
+        harmonic.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        harmonic.start(now);
+        osc.stop(now + 0.065);
+        harmonic.stop(now + 0.065);
+      } else {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = 'bandpass';
+        filter.frequency.value = type === 'press' ? 1800 : 2400;
+        filter.Q.value = 4.0;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(type === 'press' ? 320 : 540, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.035);
+
+        gain.gain.setValueAtTime(0.35 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.035);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.04);
+      }
     } catch (e) {}
   }
 
@@ -266,25 +362,119 @@
       initAudio();
       if (!audioCtx) return;
 
-      const freqs = [523.25, 659.25, 783.99, 1046.50]; // C5 - E5 - G5 - C6 vintage bell triad
-      freqs.forEach((freq, idx) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
+      const profile = getAudioProfile();
+      const vMul = getVolumeMultiplier();
+      if (vMul <= 0) return;
 
-        const startTime = audioCtx.currentTime + idx * 0.08;
-        const duration = 1.2;
+      const now = audioCtx.currentTime;
 
-        gain.gain.setValueAtTime(0.15, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      if (profile === 'braun_thud') {
+        const tones = [440.0, 554.37];
+        tones.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const filter = audioCtx.createBiquadFilter();
 
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+          filter.type = 'lowpass';
+          filter.frequency.value = 1400;
 
-        osc.start(startTime);
-        osc.stop(startTime + duration + 0.1);
-      });
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+
+          const start = now + idx * 0.12;
+          const dur = 1.4;
+
+          gain.gain.setValueAtTime(0.24 * vMul, start);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, start + dur);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(start);
+          osc.stop(start + dur + 0.1);
+        });
+      } else if (profile === 'vintage_bell') {
+        const partials = [
+          { f: 880.0, g: 0.22, d: 2.2 },
+          { f: 1760.0, g: 0.14, d: 1.8 },
+          { f: 2640.0, g: 0.08, d: 1.2 }
+        ];
+        partials.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = p.f;
+
+          gain.gain.setValueAtTime(p.g * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + p.d);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + p.d + 0.1);
+        });
+      } else if (profile === 'digital_quartz') {
+        [0.0, 0.13].forEach(offset => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = 2048;
+
+          const start = now + offset;
+          gain.gain.setValueAtTime(0.14 * vMul, start);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, start + 0.08);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(start);
+          osc.stop(start + 0.085);
+        });
+      } else if (profile === 'zen_gong') {
+        const partials = [
+          { f: 216.0, g: 0.30, d: 3.2 },
+          { f: 432.0, g: 0.18, d: 2.8 },
+          { f: 648.0, g: 0.09, d: 2.0 }
+        ];
+        partials.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = p.f;
+
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(p.g * vMul, now + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + p.d);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + p.d + 0.1);
+        });
+      } else {
+        const freqs = [523.25, 659.25, 783.99, 1046.50];
+        freqs.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+
+          const startTime = now + idx * 0.08;
+          const duration = 1.2;
+
+          gain.gain.setValueAtTime(0.18 * vMul, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, startTime + duration);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + duration + 0.1);
+        });
+      }
     } catch (e) {}
   }
 
@@ -294,17 +484,45 @@
       initAudio();
       if (!audioCtx) return;
 
+      const profile = getAudioProfile();
+      const vMul = getVolumeMultiplier();
+      if (vMul <= 0) return;
+
+      const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(1100, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.01);
+
+      if (profile === 'braun_thud') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, now);
+        gain.gain.setValueAtTime(0.03 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.016);
+      } else if (profile === 'vintage_bell') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1760, now);
+        gain.gain.setValueAtTime(0.015 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.014);
+      } else if (profile === 'digital_quartz') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(2048, now);
+        gain.gain.setValueAtTime(0.012 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.008);
+      } else if (profile === 'zen_gong') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        gain.gain.setValueAtTime(0.02 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.02);
+      } else {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1100, now);
+        gain.gain.setValueAtTime(0.02 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.01);
+      }
 
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.012);
+      osc.start(now);
+      osc.stop(now + 0.022);
     } catch (e) {}
   }
 
@@ -536,7 +754,8 @@
     playAcousticChime();
 
     if (currentPhase === 'focus') {
-      logNewSession(config.focusDurationMin, 'focus', `Focus Lap ${currentLap}`);
+      const finishedLap = currentLap;
+      logNewSession(config.focusDurationMin, 'focus', `Focus Lap ${finishedLap}`);
 
       const totalLaps = parseInt(config.lapsPerCycle, 10) || 4;
       if (currentLap >= totalLaps) {
@@ -569,7 +788,8 @@
 
     if (currentPhase === 'focus') {
       const elapsed = Math.max(1, Math.round((totalSeconds - remainingSeconds) / 60));
-      logNewSession(elapsed, 'focus', `Focus Lap ${currentLap}`);
+      const finishedLap = currentLap;
+      logNewSession(elapsed, 'focus', `Focus Lap ${finishedLap}`);
 
       const totalLaps = parseInt(config.lapsPerCycle, 10) || 4;
       if (currentLap >= totalLaps) {
@@ -1208,10 +1428,23 @@
     });
 
     function liveSyncPrefs() {
-      config.focusDurationMin = parseInt(document.getElementById('pref-focus-dur').value, 10) || 25;
-      config.shortBreakDurationMin = parseInt(document.getElementById('pref-short-break').value, 10) || 5;
-      config.longBreakDurationMin = parseInt(document.getElementById('pref-long-break').value, 10) || 15;
-      config.lapsPerCycle = parseInt(document.getElementById('pref-laps-cycle').value, 10) || 4;
+      config.focusDurationMin = Math.min(90, Math.max(1, parseInt(document.getElementById('pref-focus-dur').value, 10) || 25));
+      config.shortBreakDurationMin = Math.min(90, Math.max(1, parseInt(document.getElementById('pref-short-break').value, 10) || 50));
+      config.longBreakDurationMin = Math.min(90, Math.max(1, parseInt(document.getElementById('pref-long-break').value, 10) || 90));
+      config.lapsPerCycle = Math.min(5, Math.max(1, parseInt(document.getElementById('pref-laps-cycle').value, 10) || 4));
+      
+      const volInput = document.getElementById('pref-volume');
+      const volVal = document.getElementById('pref-volume-val');
+      if (volInput) {
+        config.volume = parseInt(volInput.value, 10);
+        if (volVal) volVal.textContent = config.volume + '%';
+      }
+
+      const profileSelect = document.getElementById('pref-audio-profile');
+      if (profileSelect) {
+        config.audioProfile = profileSelect.value;
+      }
+
       config.soundEffects = document.getElementById('pref-sound-effects').checked;
       config.chimeEnd = document.getElementById('pref-chime-end').checked;
       config.softTick = document.getElementById('pref-soft-tick').checked;
@@ -1246,6 +1479,23 @@
       const el = document.getElementById(id);
       if (el) el.addEventListener('change', liveSyncPrefs);
     });
+
+    const rootVolSlider = document.getElementById('pref-volume');
+    if (rootVolSlider) {
+      rootVolSlider.addEventListener('input', (e) => {
+        const valEl = document.getElementById('pref-volume-val');
+        if (valEl) valEl.textContent = e.target.value + '%';
+      });
+      rootVolSlider.addEventListener('change', liveSyncPrefs);
+    }
+
+    const rootProfileSelect = document.getElementById('pref-audio-profile');
+    if (rootProfileSelect) {
+      rootProfileSelect.addEventListener('change', () => {
+        liveSyncPrefs();
+        playMechanicalClick('press');
+      });
+    }
 
     btnSavePrefs.addEventListener('click', () => {
       playMechanicalClick('press');
@@ -1348,6 +1598,13 @@
         closeVaultWindow();
       }
     });
+
+    // Suppress all browser default tooltips
+    document.addEventListener('mouseover', function (e) {
+      if (e.target && e.target.hasAttribute && e.target.hasAttribute('title')) {
+        e.target.removeAttribute('title');
+      }
+    }, true);
   }
 
   // --- 10. INITIALIZATION ---
@@ -1360,13 +1617,22 @@
     setupEventListeners();
 
     // Sync Preferences form values with config
-    document.getElementById('pref-focus-dur').value = config.focusDurationMin;
-    document.getElementById('pref-short-break').value = config.shortBreakDurationMin;
-    document.getElementById('pref-long-break').value = config.longBreakDurationMin;
-    document.getElementById('pref-laps-cycle').value = config.lapsPerCycle;
-    document.getElementById('pref-sound-effects').checked = config.soundEffects;
-    document.getElementById('pref-chime-end').checked = config.chimeEnd;
-    document.getElementById('pref-soft-tick').checked = config.softTick;
+    const focusEl = document.getElementById('pref-focus-dur');
+    if (focusEl) focusEl.value = config.focusDurationMin;
+    const shortEl = document.getElementById('pref-short-break');
+    if (shortEl) shortEl.value = config.shortBreakDurationMin;
+    const longEl = document.getElementById('pref-long-break');
+    if (longEl) longEl.value = config.longBreakDurationMin;
+    const lapsEl = document.getElementById('pref-laps-cycle');
+    if (lapsEl) lapsEl.value = config.lapsPerCycle;
+    const soundEl = document.getElementById('pref-sound-effects');
+    if (soundEl) soundEl.checked = config.soundEffects;
+    const chimeEl = document.getElementById('pref-chime-end');
+    if (chimeEl) chimeEl.checked = config.chimeEnd;
+    const tickEl = document.getElementById('pref-soft-tick');
+    if (tickEl) tickEl.checked = config.softTick;
+    const profEl = document.getElementById('pref-audio-profile');
+    if (profEl) profEl.value = config.audioProfile || 'mechanical';
   }
 
   // Run on DOM ready

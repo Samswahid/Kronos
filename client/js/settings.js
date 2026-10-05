@@ -18,6 +18,8 @@
   const metricStreak = document.getElementById('metric-streak');
   const btnExportCsv = document.getElementById('btn-export-csv');
   const btnExportJson = document.getElementById('btn-export-json');
+  const btnImportJson = document.getElementById('btn-import-json');
+  const inputImportJson = document.getElementById('input-import-json');
   const btnCopySummary = document.getElementById('btn-copy-summary');
   const btnQuickAdd = document.getElementById('btn-quick-add-session');
   const btnClearAll = document.getElementById('btn-clear-all');
@@ -36,6 +38,9 @@
   const inputShort = document.getElementById('pref-short-break');
   const inputLong = document.getElementById('pref-long-break');
   const inputLaps = document.getElementById('pref-laps-cycle');
+  const inputVolume = document.getElementById('pref-volume');
+  const volumeVal = document.getElementById('pref-volume-val');
+  const selectAudioProfile = document.getElementById('pref-audio-profile');
   const toggleSound = document.getElementById('pref-sound-effects');
   const toggleChime = document.getElementById('pref-chime-end');
   const toggleTick = document.getElementById('pref-soft-tick');
@@ -245,7 +250,6 @@
         const col = document.createElement('div');
         col.className = 'chart-col';
         const pct = Math.max(slot.mins > 0 ? 8 : 2, Math.round((slot.mins / maxMins) * 100));
-        col.title = slot.mins > 0 ? `${slot.mins} mins` : '';
         col.innerHTML = `
           <span class="chart-val">${slot.mins > 0 ? slot.mins : ''}</span>
           <div class="chart-bar-wrap">
@@ -287,7 +291,6 @@
         const col = document.createElement('div');
         col.className = 'chart-col' + (day.isToday ? ' current' : '');
         const pct = Math.max(day.mins > 0 ? 8 : 2, Math.round((day.mins / maxMins) * 100));
-        col.title = day.mins > 0 ? `${day.mins} mins` : '';
         col.innerHTML = `
           <span class="chart-val">${day.mins > 0 ? day.mins : ''}</span>
           <div class="chart-bar-wrap">
@@ -323,7 +326,6 @@
         const col = document.createElement('div');
         col.className = 'chart-col' + (w.current ? ' current' : '');
         const pct = Math.max(w.mins > 0 ? 8 : 2, Math.round((w.mins / maxMins) * 100));
-        col.title = w.mins > 0 ? `${w.mins} mins` : '';
         col.innerHTML = `
           <span class="chart-val">${w.mins > 0 ? w.mins : ''}</span>
           <div class="chart-bar-wrap">
@@ -335,23 +337,30 @@
       });
     }
 
-    // 3. Render Real Category Breakdown
+    // 3. Render Real Category Breakdown (Integrating Session Tags)
     categoryContainer.innerHTML = '';
     const categories = {};
     let totalFocusMins = 0;
 
     sessions.filter(s => s.phase === 'focus').forEach(s => {
-      let rawTitle = s.title || 'General Focus';
-      let catName = rawTitle.split('•')[0].trim();
-      if (!catName) catName = 'General Focus';
+      let catNames = [];
+      if (Array.isArray(s.tags) && s.tags.length > 0) {
+        catNames = s.tags;
+      } else {
+        let rawTitle = s.title || 'General Focus';
+        let cName = rawTitle.split('•')[0].trim();
+        catNames = [cName || 'General Focus'];
+      }
       const dur = s.durationMin || 0;
       totalFocusMins += dur;
 
-      if (!categories[catName]) {
-        categories[catName] = { name: catName, minutes: 0, count: 0 };
-      }
-      categories[catName].minutes += dur;
-      categories[catName].count += 1;
+      catNames.forEach(catName => {
+        if (!categories[catName]) {
+          categories[catName] = { name: catName, minutes: 0, count: 0 };
+        }
+        categories[catName].minutes += Math.round(dur / catNames.length);
+        categories[catName].count += 1;
+      });
     });
 
     const catList = Object.values(categories).sort((a, b) => b.minutes - a.minutes);
@@ -410,12 +419,15 @@
 
       const isFocus = session.phase === 'focus';
       const badgeClass = isFocus ? 'focus' : 'break';
-      const badgeText = `${session.durationMin}M • ${isFocus ? 'FOCUS' : 'BREAK'}`;
+      const tags = Array.isArray(session.tags) ? session.tags : [];
 
       card.innerHTML = `
         <div class="card-top-row">
           <span class="card-timestamp">${session.date} • ${session.startTime}</span>
-          <span class="card-duration-badge ${badgeClass}">${badgeText}</span>
+          <div class="card-duration-edit ${badgeClass}">
+            <input type="number" class="session-duration-input" value="${session.durationMin || 25}" min="1" max="90" aria-label="Edit duration minutes">
+            <span class="card-duration-unit">M • ${isFocus ? 'FOCUS' : 'BREAK'}</span>
+          </div>
         </div>
         <div class="card-title-row">
           <input type="text" class="session-title-input" value="${escapeHtml(session.title)}" placeholder="Add session title..." aria-label="Session Title">
@@ -426,17 +438,50 @@
             </svg>
           </button>
         </div>
+        <div class="card-tags-row">
+          <div class="tags-scroll-strip">
+            ${tags.map((tag, idx) => `
+              <span class="tag-chip" data-idx="${idx}">
+                <input type="text" class="tag-name-edit" value="${escapeHtml(tag)}" maxlength="24">
+                <button class="tag-del-btn" aria-label="Delete tag">&times;</button>
+              </span>
+            `).join('')}
+            <button class="add-tag-btn">+ Tag</button>
+          </div>
+          <button class="card-resume-btn" aria-label="Resume session in Focus Bar">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Resume
+          </button>
+        </div>
       `;
 
+      // 1. Duration input edit
+      const durInput = card.querySelector('.session-duration-input');
+      durInput.addEventListener('change', (e) => {
+        const val = Math.min(90, Math.max(1, parseInt(e.target.value, 10) || 25));
+        durInput.value = val;
+        session.durationMin = val;
+        if (window.KronosStorage) {
+          window.KronosStorage.updateDuration(session.id, val);
+        }
+        updateMetrics();
+        renderAnalytics();
+      });
+
+      // 2. Title edit
       const titleInput = card.querySelector('.session-title-input');
       titleInput.addEventListener('change', (e) => {
         const newTitle = e.target.value.trim() || 'Untitled Session';
+        session.title = newTitle;
         if (window.KronosStorage) {
           window.KronosStorage.updateTitle(session.id, newTitle);
         }
         renderAnalytics();
       });
 
+      // 3. Delete session
       const delBtn = card.querySelector('.card-delete-btn');
       delBtn.addEventListener('click', () => {
         if (window.KronosStorage) {
@@ -447,15 +492,107 @@
         renderAnalytics();
       });
 
+      // 4. Tags: Edit existing tag
+      card.querySelectorAll('.tag-name-edit').forEach((input, tIdx) => {
+        input.addEventListener('change', (e) => {
+          const newTag = e.target.value.trim();
+          if (newTag) {
+            tags[tIdx] = newTag;
+          } else {
+            tags.splice(tIdx, 1);
+          }
+          session.tags = tags;
+          if (window.KronosStorage) {
+            window.KronosStorage.updateTags(session.id, tags);
+          }
+          renderSessionList();
+          renderAnalytics();
+        });
+      });
+
+      // 5. Tags: Delete tag
+      card.querySelectorAll('.tag-del-btn').forEach((btn, tIdx) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          tags.splice(tIdx, 1);
+          session.tags = tags;
+          if (window.KronosStorage) {
+            window.KronosStorage.updateTags(session.id, tags);
+          }
+          renderSessionList();
+          renderAnalytics();
+        });
+      });
+
+      // 6. Tags: Add new tag button
+      const addTagBtn = card.querySelector('.add-tag-btn');
+      addTagBtn.addEventListener('click', () => {
+        addTagBtn.style.display = 'none';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'tag-inline-input';
+        input.placeholder = 'Tag...';
+        input.maxLength = 20;
+        addTagBtn.parentNode.insertBefore(input, addTagBtn);
+        input.focus();
+
+        const commitTag = () => {
+          const val = input.value.trim();
+          if (val && !tags.includes(val)) {
+            tags.push(val);
+            session.tags = tags;
+            if (window.KronosStorage) {
+              window.KronosStorage.updateTags(session.id, tags);
+            }
+          }
+          renderSessionList();
+          renderAnalytics();
+        };
+
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') commitTag();
+          else if (ev.key === 'Escape') {
+            input.remove();
+            addTagBtn.style.display = '';
+          }
+        });
+        input.addEventListener('blur', commitTag);
+      });
+
+      // 7. Resume Session in Dockable Panel
+      const resumeBtn = card.querySelector('.card-resume-btn');
+      resumeBtn.addEventListener('click', () => {
+        if (window.KronosStorage) {
+          window.KronosStorage.broadcastSync("resume_session", {
+            id: session.id,
+            title: session.title,
+            phase: session.phase || 'focus',
+            durationMin: session.durationMin || 25,
+            tags: session.tags || []
+          });
+        }
+        try {
+          if (window.__adobe_cep__) {
+            window.__adobe_cep__.requestOpenExtension("neographs.kronos.panel", "");
+          } else if (csInterface && csInterface.requestOpenExtension) {
+            csInterface.requestOpenExtension("neographs.kronos.panel", "");
+          }
+        } catch (e) {}
+      });
+
       sessionContainer.appendChild(card);
     });
   }
 
   function syncPrefsForm() {
     if (inputFocus) inputFocus.value = config.focusDurationMin || 25;
-    if (inputShort) inputShort.value = config.shortBreakDurationMin || 5;
-    if (inputLong) inputLong.value = config.longBreakDurationMin || 15;
-    if (inputLaps) inputLaps.value = config.lapsPerCycle || 4;
+    if (inputShort) inputShort.value = config.shortBreakDurationMin || 50;
+    if (inputLong) inputLong.value = config.longBreakDurationMin || 90;
+    if (inputLaps) inputLaps.value = Math.min(5, config.lapsPerCycle || 4);
+    const vol = (config && typeof config.volume === 'number') ? config.volume : 80;
+    if (inputVolume) inputVolume.value = vol;
+    if (volumeVal) volumeVal.textContent = vol + '%';
+    if (selectAudioProfile) selectAudioProfile.value = config.audioProfile || 'mechanical';
     if (toggleSound) toggleSound.checked = !!config.soundEffects;
     if (toggleChime) toggleChime.checked = !!config.chimeEnd;
     if (toggleTick) toggleTick.checked = !!config.softTick;
@@ -463,10 +600,12 @@
 
   function getFormPrefs() {
     return {
-      focusDurationMin: parseInt(inputFocus.value, 10) || 25,
-      shortBreakDurationMin: parseInt(inputShort.value, 10) || 5,
-      longBreakDurationMin: parseInt(inputLong.value, 10) || 15,
-      lapsPerCycle: parseInt(inputLaps.value, 10) || 4,
+      focusDurationMin: Math.min(90, Math.max(1, parseInt(inputFocus.value, 10) || 25)),
+      shortBreakDurationMin: Math.min(90, Math.max(1, parseInt(inputShort.value, 10) || 50)),
+      longBreakDurationMin: Math.min(90, Math.max(1, parseInt(inputLong.value, 10) || 90)),
+      lapsPerCycle: Math.min(5, Math.max(1, parseInt(inputLaps.value, 10) || 4)),
+      volume: inputVolume ? parseInt(inputVolume.value, 10) : ((config && config.volume) ?? 80),
+      audioProfile: selectAudioProfile ? selectAudioProfile.value : (config.audioProfile || 'mechanical'),
       soundEffects: toggleSound ? toggleSound.checked : true,
       chimeEnd: toggleChime ? toggleChime.checked : true,
       softTick: toggleTick ? toggleTick.checked : false,
@@ -674,6 +813,14 @@
       }
     });
 
+    // Volume Slider Auto-Save and readout
+    if (inputVolume) {
+      inputVolume.addEventListener('input', (e) => {
+        if (volumeVal) volumeVal.textContent = e.target.value + '%';
+      });
+      inputVolume.addEventListener('change', autoSavePrefs);
+    }
+
     // Explicit Apply Button also triggers save
     if (btnSavePrefs) {
       btnSavePrefs.addEventListener('click', autoSavePrefs);
@@ -793,6 +940,51 @@
       });
     });
 
+    // JSON Session Backup & Restore
+    if (btnImportJson && inputImportJson) {
+      btnImportJson.addEventListener('click', () => {
+        inputImportJson.click();
+      });
+
+      inputImportJson.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            if (Array.isArray(parsed) && window.KronosStorage) {
+              const added = window.KronosStorage.importSessions(parsed);
+              sessions = window.KronosStorage.getSessions();
+              renderSessionList();
+              updateMetrics();
+              renderAnalytics();
+              if (saveStatus) {
+                saveStatus.textContent = `✓ Restored ${added} sessions`;
+                setTimeout(() => { if (saveStatus) saveStatus.textContent = ""; }, 2500);
+              }
+            } else {
+              alert("Invalid JSON format. Expected an array of Kronos sessions.");
+            }
+          } catch (err) {
+            alert("Error parsing backup JSON file: " + err.message);
+          }
+          inputImportJson.value = '';
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    // Audio Profile Selector change
+    if (selectAudioProfile) {
+      selectAudioProfile.addEventListener('change', () => {
+        autoSavePrefs();
+        if (window.KronosStorage) {
+          window.KronosStorage.broadcastSync("audio_profile", { profile: selectAudioProfile.value });
+        }
+      });
+    }
+
     // Esc Key closes window
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -803,6 +995,41 @@
         }
       }
     });
+
+    // Suppress all browser default tooltips
+    document.addEventListener('mouseover', function (e) {
+      if (e.target && e.target.hasAttribute && e.target.hasAttribute('title')) {
+        e.target.removeAttribute('title');
+      }
+    }, true);
+
+    // Active Disk Polling Watcher: guarantees zero missed sessions when floating window is open
+    (function setupSessionsDiskWatcher() {
+      if (typeof window.require !== 'function') return;
+      try {
+        const fs = window.require('fs');
+        const sessionsPath = "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos\\sessions.json";
+        let lastMtime = 0;
+        if (fs.existsSync(sessionsPath)) {
+          lastMtime = fs.statSync(sessionsPath).mtimeMs;
+        }
+        setInterval(function () {
+          try {
+            if (!fs.existsSync(sessionsPath)) return;
+            const stat = fs.statSync(sessionsPath);
+            if (stat.mtimeMs !== lastMtime) {
+              lastMtime = stat.mtimeMs;
+              if (window.KronosStorage) {
+                sessions = window.KronosStorage.getSessions();
+                renderSessionList();
+                updateMetrics();
+                renderAnalytics();
+              }
+            }
+          } catch (e) {}
+        }, 250);
+      } catch (e) {}
+    })();
 
     // Storage Sync from other windows
     if (window.KronosStorage && window.KronosStorage.onSync) {

@@ -10,6 +10,7 @@
   const KRONOS_DIR = "C:\\Users\\Admin\\AppData\\Local\\NeoGraphs\\Kronos";
   const PREFS_FILE = KRONOS_DIR + "\\preferences.json";
   const SESSIONS_FILE = KRONOS_DIR + "\\sessions.json";
+  const ACTIVE_STATE_FILE = KRONOS_DIR + "\\active_state.json";
 
   const THEME_DEFAULTS = {
     'charcoal': {
@@ -71,6 +72,8 @@
     soundEffects: true,
     chimeEnd: true,
     softTick: false,
+    volume: 80,
+    audioProfile: 'mechanical',
     theme: 'charcoal',
     themeCustomColors: {},
     storagePath: KRONOS_DIR
@@ -255,6 +258,83 @@
       return list;
     },
 
+    updateDuration: function (sessionId, newDuration) {
+      const list = this.getSessions();
+      const target = list.find(s => s.id === sessionId);
+      if (target) {
+        target.durationMin = Math.min(90, Math.max(1, parseInt(newDuration, 10) || 25));
+        this.saveSessions(list);
+      }
+      return list;
+    },
+
+    updateTags: function (sessionId, tags) {
+      const list = this.getSessions();
+      const target = list.find(s => s.id === sessionId);
+      if (target) {
+        target.tags = Array.isArray(tags) ? tags : [];
+        this.saveSessions(list);
+      }
+      return list;
+    },
+
+    importSessions: function (importedArray) {
+      if (!Array.isArray(importedArray)) return 0;
+      const current = this.getSessions();
+      const existingIds = new Set(current.map(s => s.id));
+      let count = 0;
+      importedArray.forEach(item => {
+        if (item && item.id && !existingIds.has(item.id)) {
+          current.push(item);
+          existingIds.add(item.id);
+          count++;
+        }
+      });
+      if (count > 0) {
+        this.saveSessions(current);
+      }
+      return count;
+    },
+
+    saveActiveState: function (state) {
+      if (fs) {
+        try {
+          ensureDirectory();
+          fs.writeFileSync(ACTIVE_STATE_FILE, JSON.stringify(state), 'utf8');
+        } catch (e) {}
+      }
+      try {
+        localStorage.setItem('kronos_active_state', JSON.stringify(state));
+      } catch (e) {}
+    },
+
+    getActiveState: function () {
+      if (fs) {
+        try {
+          if (fs.existsSync(ACTIVE_STATE_FILE)) {
+            const raw = fs.readFileSync(ACTIVE_STATE_FILE, 'utf8');
+            if (raw) return JSON.parse(raw);
+          }
+        } catch (e) {}
+      }
+      try {
+        const raw = localStorage.getItem('kronos_active_state');
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return null;
+    },
+
+    clearActiveState: function () {
+      if (fs) {
+        try {
+          if (fs.existsSync(ACTIVE_STATE_FILE)) fs.unlinkSync(ACTIVE_STATE_FILE);
+        } catch (e) {}
+      }
+      try {
+        localStorage.removeItem('kronos_active_state');
+      } catch (e) {}
+    },
+
     clearSessions: function () {
       this.saveSessions([]);
       return [];
@@ -264,12 +344,13 @@
       const payload = Object.assign({ type: type, timestamp: Date.now() }, typeof data === 'object' ? data : {});
       const jsonStr = JSON.stringify(payload);
 
-      // 1. BroadcastChannel (Instant sub-ms inter-window communication in modern Chromium/CEF)
+      // 1. Singleton BroadcastChannel
       try {
-        if (typeof BroadcastChannel !== 'undefined') {
-          const bc = new BroadcastChannel('kronos_sync_bus');
-          bc.postMessage(payload);
-          bc.close();
+        if (!window.__kronos_sync_bc && typeof BroadcastChannel !== 'undefined') {
+          window.__kronos_sync_bc = new BroadcastChannel('kronos_sync_bus');
+        }
+        if (window.__kronos_sync_bc) {
+          window.__kronos_sync_bc.postMessage(payload);
         }
       } catch (e) {}
 
@@ -293,13 +374,13 @@
 
       // 1. BroadcastChannel Listener
       try {
-        if (typeof BroadcastChannel !== 'undefined') {
-          const bc = new BroadcastChannel('kronos_sync_bus');
-          bc.onmessage = function (event) {
-            if (event && event.data) {
-              callback(event.data);
-            }
-          };
+        if (!window.__kronos_sync_bc && typeof BroadcastChannel !== 'undefined') {
+          window.__kronos_sync_bc = new BroadcastChannel('kronos_sync_bus');
+        }
+        if (window.__kronos_sync_bc) {
+          window.__kronos_sync_bc.addEventListener('message', function (event) {
+            if (event && event.data) callback(event.data);
+          });
         }
       } catch (e) {}
 
