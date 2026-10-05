@@ -196,8 +196,21 @@
     }
   }
 
-  function getVolumeMultiplier() {
-    const vol = (config && typeof config.volume === 'number') ? config.volume : 80;
+  function getSwitchVolumeMultiplier() {
+    let vol = 50;
+    if (config) {
+      if (typeof config.switchVolume === 'number') vol = config.switchVolume;
+      else if (typeof config.volume === 'number') vol = Math.round(config.volume * 0.6);
+    }
+    return Math.max(0, Math.min(1, vol / 100));
+  }
+
+  function getClockVolumeMultiplier() {
+    let vol = 80;
+    if (config) {
+      if (typeof config.clockVolume === 'number') vol = config.clockVolume;
+      else if (typeof config.volume === 'number') vol = config.volume;
+    }
     return Math.max(0, Math.min(1, vol / 100));
   }
 
@@ -212,7 +225,7 @@
       if (!audioCtx) return;
 
       const profile = getAudioProfile();
-      const vMul = getVolumeMultiplier();
+      const vMul = getSwitchVolumeMultiplier();
       if (vMul <= 0) return;
 
       const now = audioCtx.currentTime;
@@ -301,28 +314,35 @@
         osc.stop(now + 0.065);
         harmonic.stop(now + 0.065);
       } else {
-        // Default: Tactile Mechanical Switch Click
-        const osc = audioCtx.createOscillator();
+        // Tactile Mechanical Switch Click (Crisp, organic tactile click-thud)
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         const filter = audioCtx.createBiquadFilter();
 
-        filter.type = 'bandpass';
-        filter.frequency.value = type === 'press' ? 1800 : 2400;
-        filter.Q.value = 4.0;
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(type === 'press' ? 1800 : 2200, now);
 
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(type === 'press' ? 320 : 540, now);
-        osc.frequency.exponentialRampToValueAtTime(80, now + 0.035);
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(type === 'press' ? 880 : 1100, now);
+        osc1.frequency.exponentialRampToValueAtTime(320, now + 0.035);
 
-        gain.gain.setValueAtTime(0.35 * vMul, now);
-        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.035);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(type === 'press' ? 340 : 440, now);
+        osc2.frequency.exponentialRampToValueAtTime(90, now + 0.04);
 
-        osc.connect(filter);
+        gain.gain.setValueAtTime(0.42 * vMul, now);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.04);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
         filter.connect(gain);
         gain.connect(audioCtx.destination);
 
-        osc.start(now);
-        osc.stop(now + 0.04);
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.045);
+        osc2.stop(now + 0.045);
       }
     } catch (e) { }
   }
@@ -334,7 +354,7 @@
       if (!audioCtx) return;
 
       const profile = getAudioProfile();
-      const vMul = getVolumeMultiplier();
+      const vMul = getSwitchVolumeMultiplier();
       if (vMul <= 0) return;
 
       const now = audioCtx.currentTime;
@@ -356,7 +376,7 @@
           const start = now + idx * 0.12;
           const dur = 1.4;
 
-          gain.gain.setValueAtTime(0.24 * vMul, start);
+          gain.gain.setValueAtTime(0.18 * vMul, start);
           gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, start + dur);
 
           osc.connect(filter);
@@ -369,9 +389,9 @@
       } else if (profile === 'vintage_bell') {
         // Resonant Studio Brass Bell with Harmonics
         const partials = [
-          { f: 880.0, g: 0.22, d: 2.2 },
-          { f: 1760.0, g: 0.14, d: 1.8 },
-          { f: 2640.0, g: 0.08, d: 1.2 }
+          { f: 880.0, g: 0.16, d: 2.0 },
+          { f: 1760.0, g: 0.10, d: 1.6 },
+          { f: 2640.0, g: 0.06, d: 1.0 }
         ];
         partials.forEach(p => {
           const osc = audioCtx.createOscillator();
@@ -397,7 +417,7 @@
           osc.frequency.value = 2048;
 
           const start = now + offset;
-          gain.gain.setValueAtTime(0.14 * vMul, start);
+          gain.gain.setValueAtTime(0.10 * vMul, start);
           gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, start + 0.08);
 
           osc.connect(gain);
@@ -409,9 +429,9 @@
       } else if (profile === 'zen_gong') {
         // Deep Resonant Tibetan Singing Bowl / Gong
         const partials = [
-          { f: 216.0, g: 0.30, d: 3.2 },
-          { f: 432.0, g: 0.18, d: 2.8 },
-          { f: 648.0, g: 0.09, d: 2.0 }
+          { f: 216.0, g: 0.22, d: 2.8 },
+          { f: 432.0, g: 0.14, d: 2.4 },
+          { f: 648.0, g: 0.07, d: 1.8 }
         ];
         partials.forEach(p => {
           const osc = audioCtx.createOscillator();
@@ -439,9 +459,9 @@
           osc.frequency.value = freq;
 
           const startTime = now + idx * 0.08;
-          const duration = 1.2;
+          const duration = 1.1;
 
-          gain.gain.setValueAtTime(0.18 * vMul, startTime);
+          gain.gain.setValueAtTime(0.12 * vMul, startTime);
           gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, startTime + duration);
 
           osc.connect(gain);
@@ -461,7 +481,7 @@
       if (!audioCtx) return;
 
       const profile = getAudioProfile();
-      const vMul = getVolumeMultiplier();
+      const vMul = getClockVolumeMultiplier();
       if (vMul <= 0) return;
 
       const now = audioCtx.currentTime;

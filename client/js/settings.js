@@ -12,6 +12,7 @@
   // --- 1. DOM REFERENCES ---
   const sessionContainer = document.getElementById('session-cards-container');
   const sessionCountBadge = document.getElementById('session-count-badge');
+  const headerLifetimeTime = document.getElementById('header-lifetime-time');
   const headerFocusTime = document.getElementById('header-focus-time');
   const metricTodayTime = document.getElementById('metric-today-time');
   const metricTodayLaps = document.getElementById('metric-today-laps');
@@ -38,12 +39,36 @@
   const inputShort = document.getElementById('pref-short-break');
   const inputLong = document.getElementById('pref-long-break');
   const inputLaps = document.getElementById('pref-laps-cycle');
-  const inputVolume = document.getElementById('pref-volume');
-  const volumeVal = document.getElementById('pref-volume-val');
+  const inputSwitchVolume = document.getElementById('pref-switch-volume');
+  const switchVolumeVal = document.getElementById('pref-switch-volume-val');
+  const inputClockVolume = document.getElementById('pref-clock-volume');
+  const clockVolumeVal = document.getElementById('pref-clock-volume-val');
   const selectAudioProfile = document.getElementById('pref-audio-profile');
   const toggleSound = document.getElementById('pref-sound-effects');
   const toggleChime = document.getElementById('pref-chime-end');
   const toggleTick = document.getElementById('pref-soft-tick');
+
+  // Deletion Confirmation Modal References
+  const confirmModal = document.getElementById('kronos-confirm-modal');
+  const confirmCancelBtn = document.getElementById('confirm-modal-cancel');
+  const confirmDeleteBtn = document.getElementById('confirm-modal-delete');
+  let pendingDeleteSessionId = null;
+
+  function openDeleteConfirm(sessionId) {
+    pendingDeleteSessionId = sessionId;
+    if (confirmModal) {
+      confirmModal.style.display = 'flex';
+      confirmModal.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  function closeDeleteConfirm() {
+    pendingDeleteSessionId = null;
+    if (confirmModal) {
+      confirmModal.style.display = 'none';
+      confirmModal.setAttribute('aria-hidden', 'true');
+    }
+  }
 
   // --- 2. DATA LOAD & STATE ---
   let sessions = [];
@@ -166,6 +191,8 @@
     const mins = todayMinutes % 60;
     const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
+    const lifetimeMinutes = sessions.reduce((acc, s) => acc + (parseInt(s.durationMin, 10) || 0), 0);
+    if (headerLifetimeTime) headerLifetimeTime.textContent = `${lifetimeMinutes.toLocaleString('en-US')}m`;
     if (headerFocusTime) headerFocusTime.textContent = timeStr;
     if (metricTodayTime) metricTodayTime.textContent = timeStr;
     if (metricTodayLaps) metricTodayLaps.textContent = `${todaySessions.length} Lap${todaySessions.length === 1 ? '' : 's'}`;
@@ -482,15 +509,11 @@
         renderAnalytics();
       });
 
-      // 3. Delete session
+      // 3. Delete session (Themed Confirmation Dialog)
       const delBtn = card.querySelector('.card-delete-btn');
-      delBtn.addEventListener('click', () => {
-        if (window.KronosStorage) {
-          sessions = window.KronosStorage.deleteSession(session.id);
-        }
-        renderSessionList();
-        updateMetrics();
-        renderAnalytics();
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDeleteConfirm(session.id);
       });
 
       // 4. Tags: Edit existing tag
@@ -625,9 +648,23 @@
     if (inputShort) inputShort.value = config.shortBreakDurationMin || 50;
     if (inputLong) inputLong.value = config.longBreakDurationMin || 90;
     if (inputLaps) inputLaps.value = Math.min(5, config.lapsPerCycle || 4);
-    const vol = (config && typeof config.volume === 'number') ? config.volume : 80;
-    if (inputVolume) inputVolume.value = vol;
-    if (volumeVal) volumeVal.textContent = vol + '%';
+
+    let switchVol = 50;
+    if (config) {
+      if (typeof config.switchVolume === 'number') switchVol = config.switchVolume;
+      else if (typeof config.volume === 'number') switchVol = Math.round(config.volume * 0.6);
+    }
+    if (inputSwitchVolume) inputSwitchVolume.value = switchVol;
+    if (switchVolumeVal) switchVolumeVal.textContent = switchVol + '%';
+
+    let clockVol = 80;
+    if (config) {
+      if (typeof config.clockVolume === 'number') clockVol = config.clockVolume;
+      else if (typeof config.volume === 'number') clockVol = config.volume;
+    }
+    if (inputClockVolume) inputClockVolume.value = clockVol;
+    if (clockVolumeVal) clockVolumeVal.textContent = clockVol + '%';
+
     if (selectAudioProfile) selectAudioProfile.value = config.audioProfile || 'mechanical';
     if (toggleSound) toggleSound.checked = !!config.soundEffects;
     if (toggleChime) toggleChime.checked = !!config.chimeEnd;
@@ -635,17 +672,22 @@
   }
 
   function getFormPrefs() {
+    const currentTheme = (window.KronosStorage ? window.KronosStorage.getTheme() : config.theme) || 'charcoal';
+    const currentCustom = (window.KronosStorage ? window.KronosStorage.getPrefs().themeCustomColors : config.themeCustomColors) || {};
     return {
       focusDurationMin: Math.min(90, Math.max(1, parseInt(inputFocus.value, 10) || 25)),
       shortBreakDurationMin: Math.min(90, Math.max(1, parseInt(inputShort.value, 10) || 50)),
       longBreakDurationMin: Math.min(90, Math.max(1, parseInt(inputLong.value, 10) || 90)),
       lapsPerCycle: Math.min(5, Math.max(1, parseInt(inputLaps.value, 10) || 4)),
-      volume: inputVolume ? parseInt(inputVolume.value, 10) : ((config && config.volume) ?? 80),
+      switchVolume: inputSwitchVolume ? parseInt(inputSwitchVolume.value, 10) : ((config && config.switchVolume) ?? 50),
+      clockVolume: inputClockVolume ? parseInt(inputClockVolume.value, 10) : ((config && config.clockVolume) ?? 80),
+      volume: inputClockVolume ? parseInt(inputClockVolume.value, 10) : ((config && config.volume) ?? 80),
       audioProfile: selectAudioProfile ? selectAudioProfile.value : (config.audioProfile || 'mechanical'),
       soundEffects: toggleSound ? toggleSound.checked : true,
       chimeEnd: toggleChime ? toggleChime.checked : true,
       softTick: toggleTick ? toggleTick.checked : false,
-      theme: (window.KronosStorage ? window.KronosStorage.getTheme() : config.theme) || 'charcoal'
+      theme: currentTheme,
+      themeCustomColors: currentCustom
     };
   }
 
@@ -849,12 +891,20 @@
       }
     });
 
-    // Volume Slider Auto-Save and readout
-    if (inputVolume) {
-      inputVolume.addEventListener('input', (e) => {
-        if (volumeVal) volumeVal.textContent = e.target.value + '%';
+    // Switch Click Volume Slider
+    if (inputSwitchVolume) {
+      inputSwitchVolume.addEventListener('input', (e) => {
+        if (switchVolumeVal) switchVolumeVal.textContent = e.target.value + '%';
       });
-      inputVolume.addEventListener('change', autoSavePrefs);
+      inputSwitchVolume.addEventListener('change', autoSavePrefs);
+    }
+
+    // Clock Tick Volume Slider
+    if (inputClockVolume) {
+      inputClockVolume.addEventListener('input', (e) => {
+        if (clockVolumeVal) clockVolumeVal.textContent = e.target.value + '%';
+      });
+      inputClockVolume.addEventListener('change', autoSavePrefs);
     }
 
     // Explicit Apply Button also triggers save
@@ -862,16 +912,37 @@
       btnSavePrefs.addEventListener('click', autoSavePrefs);
     }
 
-    // Theme Card Click Selection
+    // Deletion Modal Button Listeners
+    if (confirmCancelBtn) {
+      confirmCancelBtn.addEventListener('click', closeDeleteConfirm);
+    }
+    if (confirmModal) {
+      confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) closeDeleteConfirm();
+      });
+    }
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', () => {
+        if (pendingDeleteSessionId && window.KronosStorage) {
+          sessions = window.KronosStorage.deleteSession(pendingDeleteSessionId);
+          renderSessionList();
+          updateMetrics();
+          renderAnalytics();
+        }
+        closeDeleteConfirm();
+      });
+    }
+
+    // Theme Card Click Selection (Persisted until explicitly reset)
     document.querySelectorAll('.theme-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        // Ignore clicks originated from swatches or reset buttons
         if (e.target.closest('.swatch') || e.target.closest('.theme-reset-btn')) return;
         const themeId = card.dataset.themeId;
         if (!themeId) return;
         if (window.KronosStorage) {
           window.KronosStorage.setTheme(themeId);
         }
+        document.documentElement.setAttribute('data-theme', themeId);
         syncThemeUI(themeId);
       });
     });
@@ -1011,13 +1082,141 @@
       });
     }
 
+    // Audio Preview Engine for Settings Modal
+    let previewAudioCtx = null;
+    function initPreviewAudio() {
+      if (!previewAudioCtx) {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtxClass) previewAudioCtx = new AudioCtxClass();
+      }
+      if (previewAudioCtx && previewAudioCtx.state === 'suspended') {
+        previewAudioCtx.resume();
+      }
+    }
+
+    function playMechanicalClick(type = 'press') {
+      try {
+        initPreviewAudio();
+        if (!previewAudioCtx) return;
+
+        const profile = selectAudioProfile ? selectAudioProfile.value : 'mechanical';
+        const vol = inputSwitchVolume ? parseInt(inputSwitchVolume.value, 10) : 50;
+        const vMul = Math.max(0, Math.min(1, vol / 100));
+        if (vMul <= 0) return;
+
+        const now = previewAudioCtx.currentTime;
+
+        if (profile === 'braun_thud') {
+          const osc = previewAudioCtx.createOscillator();
+          const gain = previewAudioCtx.createGain();
+          const filter = previewAudioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(type === 'press' ? 420 : 520, now);
+          filter.Q.value = 1.2;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(type === 'press' ? 170 : 220, now);
+          osc.frequency.exponentialRampToValueAtTime(45, now + 0.04);
+          gain.gain.setValueAtTime(0.45 * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.04);
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(previewAudioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.045);
+        } else if (profile === 'vintage_bell') {
+          const osc1 = previewAudioCtx.createOscillator();
+          const osc2 = previewAudioCtx.createOscillator();
+          const gain = previewAudioCtx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(type === 'press' ? 1480 : 1760, now);
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(type === 'press' ? 2960 : 3520, now);
+          gain.gain.setValueAtTime(0.22 * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001 * vMul, now + 0.07);
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(previewAudioCtx.destination);
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 0.075);
+          osc2.stop(now + 0.075);
+        } else if (profile === 'digital_quartz') {
+          const osc = previewAudioCtx.createOscillator();
+          const gain = previewAudioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(type === 'press' ? 2400 : 3200, now);
+          gain.gain.setValueAtTime(0.12 * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.015);
+          osc.connect(gain);
+          gain.connect(previewAudioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.018);
+        } else if (profile === 'zen_gong') {
+          const osc = previewAudioCtx.createOscillator();
+          const harmonic = previewAudioCtx.createOscillator();
+          const gain = previewAudioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(type === 'press' ? 432 : 540, now);
+          harmonic.type = 'sine';
+          harmonic.frequency.setValueAtTime(type === 'press' ? 864 : 1080, now);
+          gain.gain.setValueAtTime(0.28 * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.06);
+          osc.connect(gain);
+          harmonic.connect(gain);
+          gain.connect(previewAudioCtx.destination);
+          osc.start(now);
+          harmonic.start(now);
+          osc.stop(now + 0.065);
+          harmonic.stop(now + 0.065);
+        } else {
+          // Tactile Mechanical Switch Click (Crisp, organic tactile click-thud)
+          const osc1 = previewAudioCtx.createOscillator();
+          const osc2 = previewAudioCtx.createOscillator();
+          const gain = previewAudioCtx.createGain();
+          const filter = previewAudioCtx.createBiquadFilter();
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(type === 'press' ? 1800 : 2200, now);
+
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(type === 'press' ? 880 : 1100, now);
+          osc1.frequency.exponentialRampToValueAtTime(320, now + 0.035);
+
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(type === 'press' ? 340 : 440, now);
+          osc2.frequency.exponentialRampToValueAtTime(90, now + 0.04);
+
+          gain.gain.setValueAtTime(0.42 * vMul, now);
+          gain.gain.exponentialRampToValueAtTime(0.001 * vMul, now + 0.04);
+
+          osc1.connect(filter);
+          osc2.connect(filter);
+          filter.connect(gain);
+          gain.connect(previewAudioCtx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 0.045);
+          osc2.stop(now + 0.045);
+        }
+      } catch (e) { }
+    }
+
     // Audio Profile Selector change
     if (selectAudioProfile) {
       selectAudioProfile.addEventListener('change', () => {
         autoSavePrefs();
+        playMechanicalClick('press');
         if (window.KronosStorage) {
           window.KronosStorage.broadcastSync("audio_profile", { profile: selectAudioProfile.value });
         }
+      });
+    }
+
+    // Switch Click Volume Slider Preview
+    if (inputSwitchVolume) {
+      inputSwitchVolume.addEventListener('change', () => {
+        playMechanicalClick('press');
       });
     }
 

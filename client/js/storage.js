@@ -73,6 +73,8 @@
     chimeEnd: true,
     softTick: false,
     volume: 80,
+    switchVolume: 50,
+    clockVolume: 80,
     audioProfile: 'mechanical',
     theme: 'charcoal',
     themeCustomColors: {},
@@ -106,22 +108,32 @@
 
   const KronosStorage = {
     getPrefs: function () {
+      let loaded = null;
       if (fs) {
         try {
           ensureDirectory();
           if (fs.existsSync(PREFS_FILE)) {
             const raw = fs.readFileSync(PREFS_FILE, 'utf8');
-            return Object.assign({}, DEFAULT_CONFIG, JSON.parse(raw));
+            loaded = JSON.parse(raw);
           }
         } catch (e) {
           console.warn("[Kronos] Error reading prefs file:", e);
         }
       }
-      try {
-        const raw = localStorage.getItem('kronos_config');
-        if (raw) return Object.assign({}, DEFAULT_CONFIG, JSON.parse(raw));
-      } catch (e) {}
-      return Object.assign({}, DEFAULT_CONFIG);
+      if (!loaded) {
+        try {
+          const raw = localStorage.getItem('kronos_config');
+          if (raw) loaded = JSON.parse(raw);
+        } catch (e) {}
+      }
+      const effective = Object.assign({}, DEFAULT_CONFIG, loaded || {});
+      if (typeof effective.switchVolume !== 'number') {
+        effective.switchVolume = (typeof effective.volume === 'number') ? Math.round(effective.volume * 0.6) : 50;
+      }
+      if (typeof effective.clockVolume !== 'number') {
+        effective.clockVolume = (typeof effective.volume === 'number') ? effective.volume : 80;
+      }
+      return effective;
     },
 
     getTheme: function () {
@@ -179,7 +191,14 @@
     },
 
     savePrefs: function (prefs) {
-      const merged = Object.assign({}, DEFAULT_CONFIG, prefs);
+      const current = this.getPrefs();
+      const merged = Object.assign({}, DEFAULT_CONFIG, current, prefs || {});
+      if (current.themeCustomColors && (!prefs || !prefs.themeCustomColors)) {
+        merged.themeCustomColors = current.themeCustomColors;
+      }
+      if (current.theme && (!prefs || !prefs.theme)) {
+        merged.theme = current.theme;
+      }
       if (fs) {
         try {
           ensureDirectory();

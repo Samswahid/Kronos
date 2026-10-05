@@ -58,26 +58,14 @@
     <!-- Window Title Bar -->
     <div class="vault-titlebar">
       <div class="vault-branding">
-        <div class="vault-rotary-mini">
-          <span class="rotary-mini-amber"></span>
-        </div>
         <span class="vault-logo">KRONOS</span>
-        <span class="vault-version-tag">VAULT</span>
+        <span class="vault-by">by</span>
+        <span class="vault-logo">NEOGRAPHS</span>
       </div>
 
-      <div class="vault-stats-chip" id="today-stats-chip" aria-label="Focus time accumulated today">
-        <span class="stats-chip-dot"></span>
-        <span id="header-focus-time">0m</span>
-      </div>
-
-      <div class="vault-window-controls">
-        <button id="vault-sync-btn" class="vault-ctrl-btn sync" aria-label="Sync to Panel">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span>Sync</span>
-        </button>
-        <button id="vault-close-btn" class="vault-ctrl-btn close" aria-label="Close Window">✕</button>
+      <div class="vault-lifetime-chip" id="vault-lifetime-chip" aria-label="Lifetime focus minutes accumulated">
+        <span class="lifetime-label">LIFETIME</span>
+        <span id="header-lifetime-time">0m</span>
       </div>
     </div>
 
@@ -102,22 +90,8 @@
       </button>
     </nav>
 
-    <!-- TAB: THEMES & WATCH SKINS -->
+    <!-- TAB: THEMES -->
     <div class="vault-tab-content" id="tab-themes">
-      <div class="themes-header-strip">
-        <div>
-          <span class="section-title">WATCH SKINS &amp; COLOR SCHEMES</span>
-        </div>
-        <div class="themes-header-actions">
-          <span class="themes-count-tag" id="current-theme-name-tag">Charcoal Flap</span>
-          <button id="btn-sync-theme-to-dock" class="theme-sync-dock-btn" aria-label="Sync Theme &amp; Palette to Dockable Panel">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>
-            <span>Sync to Panel</span>
-          </button>
-        </div>
-      </div>
 
       <div class="theme-cards-grid" id="theme-cards-grid">
         <!-- 1. Charcoal Flap (Baseline) -->
@@ -132,7 +106,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Charcoal Flap</span>
-              <span class="theme-badge">BASELINE</span>
             </div>
             <span class="theme-desc">Material Charcoal • Industrial amber</span>
             <div class="theme-swatches">
@@ -176,7 +149,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Neon Lilac</span>
-              <span class="theme-badge p1">P1</span>
             </div>
             <span class="theme-desc">Spotify RAP-200A • Soft Lilac &amp; Deep Amethyst</span>
             <div class="theme-swatches">
@@ -220,7 +192,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Braun 1972</span>
-              <span class="theme-badge p2">P2</span>
             </div>
             <span class="theme-desc">Dieter Rams Ivory • Slate Black &amp; Safety Orange</span>
             <div class="theme-swatches">
@@ -264,7 +235,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Cyber Violet</span>
-              <span class="theme-badge p3">P3</span>
             </div>
             <span class="theme-desc">Obsidian Pitch Black • Electric Neon Violet Glow</span>
             <div class="theme-swatches">
@@ -308,7 +278,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Kyoto Matcha</span>
-              <span class="theme-badge">VINTAGE</span>
             </div>
             <span class="theme-desc">Matcha Latte Vending • Washi Cream &amp; Brass</span>
             <div class="theme-swatches">
@@ -352,7 +321,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Cobalt Runner</span>
-              <span class="theme-badge">ATHLETIC</span>
             </div>
             <span class="theme-desc">Electric Cobalt Blue • High-Vis Athletic Orange</span>
             <div class="theme-swatches">
@@ -396,7 +364,6 @@
           <div class="theme-card-info">
             <div class="theme-name-row">
               <span class="theme-title">Solar Ochre</span>
-              <span class="theme-badge">BAUHAUS</span>
             </div>
             <span class="theme-desc">Bauhaus Canary Ochre • Deep Ink Black Digits</span>
             <div class="theme-swatches">
@@ -554,10 +521,17 @@
         <div class="pref-group">
           <div class="group-title">TACTILE AUDIO SYNTHESIS</div>
           <div class="pref-row">
-            <label for="pref-volume">Sound Volume</label>
+            <label for="pref-switch-volume">Switch Click Volume</label>
             <div class="volume-control-box">
-              <input type="range" id="pref-volume" min="0" max="100" value="80" class="pref-slider">
-              <span id="pref-volume-val" class="volume-val">80%</span>
+              <input type="range" id="pref-switch-volume" min="0" max="100" value="50" class="pref-slider">
+              <span id="pref-switch-volume-val" class="volume-val">50%</span>
+            </div>
+          </div>
+          <div class="pref-row">
+            <label for="pref-clock-volume">Clock Tick Volume</label>
+            <div class="volume-control-box">
+              <input type="range" id="pref-clock-volume" min="0" max="100" value="80" class="pref-slider">
+              <span id="pref-clock-volume-val" class="volume-val">80%</span>
             </div>
           </div>
           <div class="pref-row">
@@ -607,6 +581,28 @@
   </div>
 
   <div id="kronos-toast" class="toast-bubble" aria-live="polite"></div>
+
+  <!-- Clean Themed Modal Dialog for Deletion Confirmation -->
+  <div id="kronos-confirm-modal" class="confirm-modal-backdrop" aria-hidden="true" style="display: none;">
+    <div class="confirm-dialog-card">
+      <div class="confirm-dialog-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+      </div>
+      <div class="confirm-dialog-body">
+        <div class="confirm-dialog-title">Delete Session?</div>
+        <p class="confirm-dialog-msg">Do you want to delete this recorded session? This action cannot be undone.</p>
+      </div>
+      <div class="confirm-dialog-actions">
+        <button id="confirm-modal-cancel" class="confirm-btn cancel" type="button">Cancel</button>
+        <button id="confirm-modal-delete" class="confirm-btn delete" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/CSInterface.js"></script>
   <script src="js/storage.js"></script>
